@@ -71,6 +71,7 @@ simbolo simb;
 void InicTabSimb (void);
 void VerificaInicRef (void);
 void ImprimeTabSimb (void);
+void Incompatibilidade (char *s);
 simbolo InsereSimb (char *, int, int);
 int hash (char *);
 simbolo ProcuraSimb (char *);
@@ -87,10 +88,13 @@ void NaoDeclarado (char *);
 	float valreal;
 	char carac;
     simbolo simb;
+    int tipoexpr;
 }
 
 /* Declaracao dos atributos dos tokens e dos nao-terminais */
 
+%type       <tipoexpr>      Expression AuxExpr1 AuxExpr2
+                            AuxExpr3 AuxExpr4 Term Factor
 %type       <simb>          Variable
 %token		<cadeia>		ID
 %token		<carac>		    CHARCT
@@ -172,13 +176,32 @@ Statement   	:   CompStat  |  AssignStat
 AssignStat  	:   Variable 
                     {if  ($1 != NULL) $1->inic = $1->ref = VERDADE;}
                     ASSIGN  {printf ("= ");}  Expression  SCOLON
-                    {printf (";\n");}
+                    {printf (";\n");
+                    if ($1 != NULL)
+                    if ((($1->tvar == INTEIRO || $1->tvar == CARACTERE) && 
+                            ($5 == REAL || $5 == LOGICO)) ||
+                            ($1->tvar == REAL && $5 == LOGICO) || 
+                            ($1->tvar == LOGICO && $5 != LOGICO))
+                                Incompatibilidade ("Lado direito de comando de atribuicao improprio");
+                    }
                 ;
-Expression  	:   AuxExpr1  |  Expression  OR  {printf ("|| ");}  AuxExpr1
+Expression  	:   AuxExpr1  |  Expression  OR  {printf ("|| ");}  AuxExpr1 {
+                        if ($1 != LOGICO || $4 != LOGICO)
+                            Incompatibilidade  ("Operando improprio para operador OR");
+                        $$ = LOGICO;
+                    }
                 ;
-AuxExpr1    	:   AuxExpr2  |  AuxExpr1  AND  {printf ("&& ");}  AuxExpr2
+AuxExpr1    	:   AuxExpr2  |  AuxExpr1  AND  {printf ("&& ");}  AuxExpr2 {
+                        if ($1 != LOGICO || $4 != LOGICO)
+                            Incompatibilidade  ("Operando improprio para operador AND");
+                        $$ = LOGICO;
+                    }
                 ;
-AuxExpr2    	:   AuxExpr3  |  NOT  {printf ("! ");}  AuxExpr3
+AuxExpr2    	:   AuxExpr3  |  NOT  {printf ("! ");}  AuxExpr3 {
+                        if ($3 != LOGICO)
+                                Incompatibilidade  ("Operando improprio para operador NOT");
+                        $$ = LOGICO;               
+                    }
                 ;
 AuxExpr3    	:   AuxExpr4
                 |   AuxExpr4  RELOP  {
@@ -190,7 +213,23 @@ AuxExpr3    	:   AuxExpr4
                             case GT: printf ("> "); break;
                             case GE: printf (">= "); break;
                         }
-                    }  AuxExpr4
+                    }  AuxExpr4 {
+                        switch ($2) {
+                        case LT: case LE: case GT: case GE:
+                            if ($1 != INTEIRO && $1 != REAL && $1 != CARACTERE
+                                || $4 != INTEIRO && $4!=REAL && $4!=CARACTERE)
+                                     Incompatibilidade  ("Operando improprio para operador relacional");
+                            $$ = LOGICO;               
+                            break;
+                        case EQ: case NE:
+                            if ($1 == LOGICO && $4 != LOGICO
+                                || $1 != LOGICO && $4 == LOGICO)
+                                    Incompatibilidade ("Operando improprio para operador relacional equals");
+                            $$ = LOGICO;
+                            break;
+                        }
+
+                    }
                 ;
 AuxExpr4    	:   Term
                 |   AuxExpr4  ADOP  {
@@ -198,7 +237,14 @@ AuxExpr4    	:   Term
                             case MAIS: printf ("+ "); break;
                             case MENOS: printf ("- "); break;
                         }
-                    }  Term
+                    }  Term {
+                        if ($1 != INTEIRO && $1 != REAL && $1 != CARACTERE
+                            || $4 != INTEIRO && $4!=REAL && $4!=CARACTERE)
+                                 Incompatibilidade  ("Operando improprio para operador aditivo");
+                        if ($1 == REAL || $4 == REAL) $$ = REAL;
+                        else $$ = INTEIRO;                
+                        break;
+                    }
                 ;
 Term  	    	:   Factor
                 |   Term  MULTOP  {
@@ -207,16 +253,41 @@ Term  	    	:   Factor
                             case DIV: printf ("/ "); break;
                             case RESTO: printf ("%% "); break;
                         }
-                    }  Factor
-                ;
-Factor		    :   Variable {if  ($1 != NULL)  $1->ref  =  VERDADE;}
-                |   INTCT  {printf ("%d ", $1);}
-                |   FLOATCT  {printf ("%g ", $1);}
-                |   CHARCT  {printf ("\'%c\' ", $1);}
-            	|   TRUE  {printf ("true ");}
-            	|   FALSE  {printf ("false ");}
+                    }  Factor {
+                        switch ($2) {
+                        case MULT: case DIV:
+                         if ($1 != INTEIRO && $1 != REAL && $1 != CARACTERE
+                            || $4 != INTEIRO && $4!=REAL && $4!=CARACTERE)
+                           Incompatibilidade  ("Operando improprio para operador aritmetico");
+                         if ($1 == REAL || $4 == REAL) $$ = REAL;
+                         else $$ = INTEIRO;                break;
+                        case RESTO:
+                          if ($1 != INTEIRO && $1 != CARACTERE 
+                            ||  $4 != INTEIRO && $4 != CARACTERE)
+                           Incompatibilidade
+                            ("Operando improprio para operador resto");
+                        $$ = INTEIRO;                   break;
+                       }}
+                    ;
+Factor		    :   Variable {if  ($1 != NULL) {
+                        $1->ref  =  VERDADE;
+                        $$ = $1->tvar;
+                        }
+                    }
+                |   INTCT  {printf ("%d ", $1); $$ = INTEIRO;}
+                |   FLOATCT  {printf ("%g ", $1); $$ = REAL;}
+                |   CHARCT  {printf ("\'%c\' ", $1); $$ = CARACTERE;}
+            	|   TRUE  {printf ("true "); $$ = LOGICO;}
+            	|   FALSE  {printf ("false "); $$ = LOGICO;}
             	|   NEG  {printf ("~ ");}  Factor
-            	|   OPPAR  {printf ("( ");}  Expression  CLPAR  {printf (") ");}
+                    {
+                        if ($3 != INTEIRO &&
+                                $3 != REAL && $3 != CARACTERE)
+    Incompatibilidade  ("Operando improprio para menos unario");
+                        if ($3 == REAL) $$ = REAL;
+                        else $$ = INTEIRO;
+                    }
+            	|   OPPAR  {printf ("( ");}  Expression  CLPAR  {printf (") "); $$ = $3;}
                 ;
 Variable		:   ID  
                     {
@@ -318,6 +389,11 @@ void VerificaInicRef () {
                 printf ("Classe %d: Não referenciada\n", i);
         }
 }
+
+void Incompatibilidade (char *s) {
+    printf ("\n\n***** Incompatibilidade: %s *****\n\n", s);
+}
+
 
 /*  Mensagens de erros semanticos  */
 
