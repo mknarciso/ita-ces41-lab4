@@ -140,7 +140,7 @@ void InsereListSimb (simbolo, listsimb*);
 /* Declaracao dos atributos dos tokens e dos nao-terminais */
 
 %type	    <simb>	        Variable Header FuncHeader  ProcHeader
-%type 	    <tipoexpr> 	    Expression  AuxExpr1  AuxExpr2 ReturnStat
+%type 	    <tipoexpr> 	    Expression  AuxExpr1  AuxExpr2 CompStat StatList Statement ReturnStat
                             AuxExpr3   AuxExpr4   Term   Factor 
                             
 %type       <nsubscr>       SubscrList
@@ -262,16 +262,16 @@ SubProgs 	:
 			|	SubProgs SubProgDecl
 			;
 
-SubProgDecl :	Header Decls CompStat ReturnStat {
-				if ($1->tvar == INTEIRO && $4 != INTEIRO && $4 != CARACTERE)  
+SubProgDecl :	Header Decls CompStat {
+				if ($1->tvar == INTEIRO && $3 != INTEIRO && $3 != CARACTERE)  
 					Incompatibilidade ("Função do tipo inteiro não retorna inteiro ou caractere");
-				if ($1->tvar == REAL && $4 != INTEIRO && $4 != REAL && $4 != CARACTERE)
+				if ($1->tvar == REAL && $3 != INTEIRO && $3 != REAL && $3 != CARACTERE)
 					Incompatibilidade ("Função do tipo real não retorna real, inteiro ou caractere");
-				if ($1->tvar == CARACTERE && $4 != INTEIRO && $4 != CARACTERE)
+				if ($1->tvar == CARACTERE && $3 != INTEIRO && $3 != CARACTERE)
 					Incompatibilidade ("Função do tipo caractere não retorna inteiro ou caractere");
-				if ($1->tvar == LOGICO && $4 != LOGICO)
+				if ($1->tvar == LOGICO && $3 != LOGICO)
 					Incompatibilidade ("Função do tipo lógico não retorna tipo lógico");
-				if ($1->tvar == NAOVAR && $4 != NAOVAR)
+				if ($1->tvar == NAOVAR && $3 != NAOVAR)
 					Incompatibilidade ("Função do tipo void retornando expressão");
 				}	
 			;
@@ -322,8 +322,8 @@ ProcHeader 	: 	PROCEDURE ID {
 					$<simb>$ = simb;
 				}
 				OPPAR 
-				{printf ("procedure %s (",$2);}
-				ParamList CLPAR SCOLON
+				{printf ("procedure %s (",$2); declparam = VERDADE;}
+				ParamList CLPAR {declparam = FALSO;} SCOLON
 				{printf (");\n");}
 			;
 
@@ -348,11 +348,14 @@ CompStat    :	OPBRACE {
 					tabular ();
 					 printf ("}\n");
 					 tab++;
+					 $$ = $3;
 				}
 			;
 
 StatList	:	
-			|	StatList Statement
+			|	StatList Statement {
+				$$ = $2;
+			}
 			;
 
 Statement   :	CompStat
@@ -364,7 +367,9 @@ Statement   :	CompStat
 			|	{tabular ();} WriteStat
 			|	{tabular ();} AssignStat
 			|	{tabular ();} CallStat
-			|	{tabular ();} ReturnStat
+			|	{tabular ();} ReturnStat {
+				$$ = $2;
+			}
 			|	{tabular ();} SCOLON
 			;
 
