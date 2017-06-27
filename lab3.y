@@ -21,8 +21,16 @@
 
 /*   Definicao dos tipos de identificadores   */
 
-#define 	IDPROG		1
+#define 	IDGLOB		1
 #define 	IDVAR		2
+#define		IDFUNC		3
+#define		IDPROC		4
+#define		IDPROG		5
+
+/*	Definicao dos tipos de passagem de parametros */
+
+#define		PARAMVAL	1
+#define		PARAMREF	2
 
 /*  Definicao dos tipos de variaveis   */
 
@@ -41,7 +49,7 @@
 
 /*  Strings para nomes dos tipos de identificadores  */
 
-char *nometipid[3] = {" ", "IDPROG", "IDVAR"};
+char *nometipid[6] = {" ", "IDGLOB", "IDVAR", "IDFUNC", "IDPROC", "IDPROG"};
 
 /*  Strings para nomes dos tipos de variaveis  */
 
@@ -49,30 +57,61 @@ char *nometipvar[5] = {"NAOVAR",
 	"INTEIRO", "LOGICO", "REAL", "CARACTERE"
 };
 
+
+
 /*    Declaracoes para a tabela de simbolos     */
 
 typedef struct celsimb celsimb;
 typedef celsimb *simbolo;
+
+/* Listas de simbolos */
+typedef struct elemlistsimb elemlistsimb;
+typedef elemlistsimb *pontelemlistsimb;
+typedef elemlistsimb *listsimb;
+
+struct elemlistsimb {
+	simbolo simb; 
+	pontelemlistsimb prox;
+};
+
+
 struct celsimb {
 	char *cadeia;
-	int tid, tvar, ndims, dims[MAXDIMS + 1];
-	char inic, ref, array;
-	simbolo prox;
+	int tid, tvar, tparam, ndims, dims[MAXDIMS + 1], nparam;
+	char inic, ref, array, param;
+	listsimb listparam, listfunc, listvardecl;
+	simbolo escopo, prox;
+};
+
+/* Declaração para lista de expressões */
+
+typedef struct infolistexpr infolistexpr;
+typedef struct pontexprtipo pontexprtipo;
+struct pontexprtipo {
+	pontexprtipo* prox;
+	int tipo;
+};
+
+struct infolistexpr { 
+	pontexprtipo* listtipo;  
+	int nargs; 
 };
 
 /*  Variaveis globais para a tabela de simbolos e analise semantica */
 
 simbolo tabsimb[NCLASSHASH];
-simbolo simb;
+simbolo simb, escopo;
 int tipocorrente;
 int tab = 0;
+int declparam;
+listsimb pontvardecl, pontfunc, pontparam;
 /* Prototipos das funcoes para a tabela de simbolos e analise semantica */
 
 void InicTabSimb (void);
 void ImprimeTabSimb (void);
-simbolo InsereSimb (char *, int, int);
+simbolo InsereSimb (char *, int, int, simbolo);
 int hash (char *);
-simbolo ProcuraSimb (char *);
+simbolo ProcuraSimb (char *, simbolo);
 void DeclaracaoRepetida (char *);
 void TipoInadequado (char *);
 void NaoDeclarado (char *);
@@ -80,6 +119,9 @@ void VerificaInicRef (void);
 void Incompatibilidade (char *);
 void Esperado (char *);
 void NaoEsperado (char *);
+void ChecArgumentos (pontexprtipo*, listsimb);
+pontexprtipo* InicListTipo (int);
+void InsereListSimb (simbolo, listsimb*);
 %}
 
 /* Definicao do tipo de yylval e dos atributos dos nao terminais */
@@ -92,13 +134,18 @@ void NaoEsperado (char *);
 	simbolo simb;
 	int tipoexpr;
 	int nsubscr;
+	infolistexpr infolexpr;
 }
 /* Declaracao dos atributos dos tokens e dos nao-terminais */
 
-%type	    <simb>	        Variable
-%type 	    <tipoexpr> 	    Expression  AuxExpr1  AuxExpr2
-                            AuxExpr3   AuxExpr4   Term   Factor
+%type	    <simb>	        Variable Header FuncHeader  ProcHeader
+%type 	    <tipoexpr> 	    Expression  AuxExpr1  AuxExpr2 ReturnStat
+                            AuxExpr3   AuxExpr4   Term   Factor 
+                            
 %type       <nsubscr>       SubscrList
+%type 		<infolexpr>		ExprList Arguments
+%type  		<simb>  		FuncCall
+
 
 %token		DOLAR
 
@@ -152,8 +199,12 @@ void NaoEsperado (char *);
 	Os terminais sao escritos e, depois de alguns,
 	para alguma estetica, ha mudanca de linha       */
 
-Prog 		: 		{InicTabSimb ();}  PROGRAM  ID  SCOLON
-                    {printf ("program %s ;\n", $3); InsereSimb ($3, IDPROG, NAOVAR);}
+Prog 		: 		{InicTabSimb (); declparam = FALSO;
+						escopo = simb = InsereSimb("global##", IDPROG, NAOVAR, NULL);
+						pontvardecl = simb->listvardecl;
+						pontfunc = simb->listfunc;
+					}  PROGRAM  ID  SCOLON
+                    {printf ("program %s ;\n", $3);}
                     Decls SubProgs CompStat  {
                         VerificaInicRef ();
                         ImprimeTabSimb ();
@@ -186,10 +237,10 @@ ElemList 	: 	Elem
 
 Elem 		:	ID  {
                     printf ("%s ", $1);
-                    if  (ProcuraSimb ($1)  !=  NULL)
+                    if  (ProcuraSimb ($1, escopo)  !=  NULL)
                         DeclaracaoRepetida ($1);
                     else {
-                        simb = InsereSimb ($1,  IDVAR,  tipocorrente);
+                        simb = InsereSimb ($1,  IDVAR,  tipocorrente, escopo);
                         simb->array = FALSO; simb->ndims = 0;
                     }
                 }  DimList
@@ -209,24 +260,66 @@ SubProgs 	:
 			|	SubProgs SubProgDecl
 			;
 
-SubProgDecl :	Header Decls CompStat
+SubProgDecl :	Header Decls CompStat ReturnStat {
+				if ($1->tvar == INTEIRO && $4 != INTEIRO && $4 != CARACTERE)  
+					Incompatibilidade ("Função do tipo inteiro não retorna inteiro ou caractere");
+				if ($1->tvar == REAL && $4 != INTEIRO && $4 != REAL && $4 != CARACTERE)
+					Incompatibilidade ("Função do tipo real não retorna real, inteiro ou caractere");
+				if ($1->tvar == CARACTERE && $4 != INTEIRO && $4 != CARACTERE)
+					Incompatibilidade ("Função do tipo caractere não retorna inteiro ou caractere");
+				if ($1->tvar == LOGICO && $4 != LOGICO)
+					Incompatibilidade ("Função do tipo lógico não retorna tipo lógico");
+				if ($1->tvar == NAOVAR && $4 != NAOVAR)
+					Incompatibilidade ("Função do tipo void retornando expressão");
+				}	
 			;
 
-Header 		: 	{printf("function ");} FuncHeader
-			| 	ProcHeader
+Header 		: 	{printf("function ");} FuncHeader {$$ = $2;}
+			| 	ProcHeader {$$ = $1;}
 			;
 
-FuncHeader 	: 	FUNCTION Type ID OPPAR CLPAR SCOLON 
-				{printf ("%s ();\n",$3);}
-			|	FUNCTION Type ID OPPAR 
-				{printf ("%s (",$3);}	
-				ParamList CLPAR SCOLON
+FuncHeader 	: 	FUNCTION Type ID {
+					if  (ProcuraSimb ($3, escopo)  !=  NULL)
+                        DeclaracaoRepetida ($3);
+					escopo = simb = InsereSimb ($3, IDFUNC, tipocorrente, escopo);
+					pontvardecl = simb->listvardecl;
+					pontparam = simb->listparam;
+                    $<simb>$ = simb;
+
+				}
+				OPPAR {declparam = VERDADE;} CLPAR {declparam = FALSO;} SCOLON {printf ("%s ();\n",$3);}
+			|	FUNCTION Type ID {
+					if  (ProcuraSimb ($3, escopo)  !=  NULL)
+                        DeclaracaoRepetida ($3);
+					escopo = simb = InsereSimb ($3, IDFUNC, tipocorrente, escopo);
+					pontvardecl = simb->listvardecl;
+					pontparam = simb->listparam;
+					$<simb>$ = simb;
+				}
+				OPPAR {declparam = VERDADE;} {printf ("%s (",$3);}	
+				ParamList CLPAR {declparam = FALSO;} SCOLON
 				{printf (");\n");}
 			;
 
-ProcHeader 	: 	PROCEDURE ID OPPAR CLPAR SCOLON
+ProcHeader 	: 	PROCEDURE ID {
+					if  (ProcuraSimb ($2, escopo)  !=  NULL)
+                        DeclaracaoRepetida ($2);
+					escopo = simb = InsereSimb ($2, IDPROC, NAOVAR, escopo);
+					pontvardecl = simb->listvardecl;
+					pontparam = simb->listparam;
+					$<simb>$ = simb;
+				}
+				OPPAR CLPAR SCOLON
 				{printf ("procedure %s ();\n",$2);}
-			| 	PROCEDURE ID OPPAR 
+			| 	PROCEDURE ID {
+					if  (ProcuraSimb ($2, escopo)  !=  NULL)
+                        DeclaracaoRepetida ($2);
+					escopo = simb = InsereSimb ($2, IDPROC, NAOVAR, escopo);
+					pontvardecl = simb->listvardecl;
+					pontparam = simb->listparam;
+					$<simb>$ = simb;
+				}
+				OPPAR 
 				{printf ("procedure %s (",$2);}
 				ParamList CLPAR SCOLON
 				{printf (");\n");}
@@ -368,8 +461,12 @@ CallStat 	: 	CALL ID OPPAR CLPAR SCOLON
 				{printf (");\n");}
 			;
 
-ReturnStat 	: 	RETURN SCOLON {printf ("return ;\n");}
-			| 	RETURN {printf ("return ");}Expression SCOLON {printf (";\\n");}
+ReturnStat 	: 	RETURN SCOLON {printf ("return ;\n");
+					$$ = NAOVAR;
+			}
+			| 	RETURN {printf ("return ");} Expression SCOLON {printf (";\\n");
+					$$ = $3;
+			}
 			;
 
 AssignStat 	:	Variable  {if  ($1 != NULL) $1->inic = $1->ref = VERDADE;}
@@ -384,8 +481,13 @@ AssignStat 	:	Variable  {if  ($1 != NULL) $1->inic = $1->ref = VERDADE;}
                 }
 			;
 
-ExprList 	: 	Expression
-			| 	ExprList COMMA {printf(", ");} Expression
+ExprList 	: 	Expression {$$.nargs = 1;   $$.listtipo = InicListTipo ($1);}
+			| 	ExprList COMMA {printf(", ");} Expression {
+				$$.nargs = $1.nargs + 1;
+				$$.listtipo = 
+					ConcatListTipo ($1.listtipo, InicListTipo ($4));
+
+			}
 			;
 
 Expression  :   AuxExpr1
@@ -496,7 +598,7 @@ Factor 		: 	Variable  {
 			;
 Variable 	: 	ID  {
                     printf ("%s ", $1);
-                    simb = ProcuraSimb ($1);
+                    simb = ProcuraSimb ($1, escopo);
                     if (simb == NULL)   NaoDeclarado ($1);
                     else if (simb->tid != IDVAR)   TipoInadequado ($1);
                     $<simb>$ = simb;
@@ -524,12 +626,25 @@ Subscript 	: 	OPBRAK  {printf ("[ ");}  AuxExpr4  CLBRAK  {
                         }
 			;
 
-FuncCall 	: 	ID {printf ("%s",$1);}  FuncCallAux
+FuncCall 	: 	ID {printf ("%s",$1);}  OPPAR {printf ("(");
+					simb = ProcuraSimb ($1, escopo->escopo);
+					if (! simb) NaoDeclarado ($1);
+					else if (simb->tid != IDFUNC)
+						TipoInadequado ($1);
+					$<simb>$ = simb;	
+			} Arguments CLPAR {printf (")");
+				$$ = $<simb>4;
+				if ($$ && $$->tid == IDFUNC) {
+					if ($$->nparam != $5.nargs)
+						Incompatibilidade 
+				("Numero de argumentos diferente do  numero de parametros");
+					ChecArgumentos  ($5.listtipo, $$->listparam); 
+				}
+			}
 			;
 
-FuncCallAux	: 	OPPAR {printf ("(");} CLPAR {printf (")");}
-			|	OPPAR {printf ("(");} ExprList CLPAR {printf (")");}
-			;
+Arguments	:	{ $$.nargs = 0; $$.listtipo = NULL;}
+			|	ExprList /*default: $$ = $1;*/
 
 %%
 
@@ -579,29 +694,66 @@ void InicTabSimb () {
 	Caso contrario, retorna NULL.
  */
 
-simbolo ProcuraSimb (char *cadeia) {
+simbolo ProcuraSimb (char *cadeia, simbolo escopo) {
 	simbolo s; int i;
 	i = hash (cadeia);
-	for (s = tabsimb[i]; (s!=NULL) && strcmp(cadeia, s->cadeia);
+	for (s = tabsimb[i]; (s!=NULL) && strcmp(cadeia, s->cadeia) && (s->escopo == escopo);
 		s = s->prox);
 	return s;
 }
 
-/*
-	InsereSimb (cadeia, tid, tvar): Insere cadeia na tabela de
-	simbolos, com tid como tipo de identificador e com tvar como
-	tipo de variavel; Retorna um ponteiro para a celula inserida
- */
 
-simbolo InsereSimb (char *cadeia, int tid, int tvar) {
+/*
+	InsereSimb (cadeia, tid, tvar, simbolo escopo): Insere cadeia na tabela de
+	simbolos, com tid como tipo de identificador, com tvar como
+	tipo de variavel, e com o escopo; Retorna um ponteiro para a celula inserida
+ */
+simbolo InsereSimb (char *cadeia, int tid, int tvar, simbolo escopo) {
 	int i; simbolo aux, s;
-	i = hash (cadeia); aux = tabsimb[i];
-	s = tabsimb[i] = (simbolo) malloc (sizeof (celsimb));
-	s->cadeia = (char*) malloc ((strlen(cadeia)+1) * sizeof(char));
+	i = hash (cadeia);  aux = tabsimb[i];
+	s = tabsimb[i] = malloc (sizeof (celsimb));
+	s->cadeia = malloc ((strlen(cadeia)+1)* sizeof(char));
 	strcpy (s->cadeia, cadeia);
-	s->tid = tid;		s->tvar = tvar;
-	s->inic = FALSO;	s->ref = FALSO;
-	s->prox = aux;	return s;
+	s->prox = aux; s->tid = tid;  s->tvar = tvar;
+	s->escopo = escopo;
+
+
+/*	Codigo para parametros e variáveis globais e locais  */
+
+	if (declparam) {
+		s->inic = s->ref = s->param = VERDADE;
+		if (s->tid == IDVAR)
+			InsereListSimb (s, &pontparam);
+		s->escopo->nparam++;
+	}
+	else {
+		s->inic = s->ref = s->param = FALSO;
+		if (s->tid == IDVAR)
+			InsereListSimb (s, &pontvardecl);
+	}
+
+/*	Codigo para identificador global ou nome de função  */
+
+	if (tid == IDGLOB || tid == IDFUNC) {
+		s->listvardecl = (elemlistsimb *) 
+			malloc  (sizeof (elemlistsimb));
+		s->listvardecl->prox = NULL;
+	}
+	if (tid == IDGLOB) {
+		s->listfunc = (elemlistsimb *) 
+			malloc  (sizeof (elemlistsimb));
+		s->listfunc->prox = NULL;
+	}
+
+/*	Codigo para nome de função e retorno de Inserir */
+	if (tid == IDFUNC) {
+		s->listparam = (elemlistsimb *) 
+			malloc  (sizeof (elemlistsimb));
+		s->listparam->prox = NULL;
+		s->nparam = 0;
+   		InsereListSimb (s, &pontfunc);
+	}
+	return s;
 }
 
 /*
@@ -684,6 +836,54 @@ void VerificaInicRef () {
 				}
 }
 
+void ChecArgumentos (pontexprtipo* Ltiparg,   listsimb Lparam) {
+	pontexprtipo* p;  pontelemlistsimb q;
+	p = Ltiparg->prox; q = Lparam->prox;
+	while (p != NULL && q != NULL) {
+		switch (q->simb->tvar) {
+			case INTEIRO: case CARACTERE:
+				if (p->tipo != INTEIRO && p->tipo != CARACTERE)
+					Incompatibilidade("Tipo de argumento diferente do tipo de parametro");
+				break;
+			case REAL:
+				if (p->tipo != INTEIRO &&  p->tipo != CARACTERE && 
+								p->tipo != REAL)
+					Incompatibilidade("Tipo de argumento diferente do tipo de parametro");			
+				break;
+			case LOGICO:
+				if (p->tipo != LOGICO)
+					Incompatibilidade("Tipo de argumento diferente do tipo de parametro");
+				break;
+			default:
+				if (q->simb->tvar != p->tipo)
+					Incompatibilidade("Tipo de argumento diferente do tipo de parametro");
+				break;
+		}
+		p = p->prox; q = q->prox;
+	}
 
+
+}
+
+pontexprtipo* InicListTipo (int tipoexpr) {
+	pontexprtipo* s;
+	s = (pontexprtipo*) malloc (sizeof (pontexprtipo));
+	s->prox = NULL;
+	s->tipo = tipoexpr; 
+	return s;
+} 
+
+pontexprtipo* ConcatListTipo (pontexprtipo* first, pontexprtipo* second) {
+	pontexprtipo* p = first;
+	while (p->prox != NULL) p = p->prox;
+	p->prox = second;
+	return first;
+}
+
+void InsereListSimb (simbolo s, listsimb* p) {
+	listsimb aux = s->listvardecl;
+	while (aux->prox != NULL) aux = aux->prox;
+	aux->prox = *p;
+}
 
 
