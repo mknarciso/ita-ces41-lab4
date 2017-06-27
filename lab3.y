@@ -112,6 +112,7 @@ void ImprimeTabSimb (void);
 simbolo InsereSimb (char *, int, int, simbolo);
 int hash (char *);
 simbolo ProcuraSimb (char *, simbolo);
+simbolo ProcuraSimbDecl (char *, simbolo);
 void DeclaracaoRepetida (char *);
 void TipoInadequado (char *);
 void NaoDeclarado (char *);
@@ -599,7 +600,7 @@ Factor 		: 	Variable  {
 			;
 Variable 	: 	ID  {
                     printf ("%s ", $1);
-                    simb = ProcuraSimb ($1, escopo);
+                    simb = ProcuraSimbDecl ($1, escopo);
                     if (simb == NULL)   NaoDeclarado ($1);
                     else if (simb->tid != IDVAR)   TipoInadequado ($1);
                     $<simb>$ = simb;
@@ -702,6 +703,18 @@ simbolo ProcuraSimb (char *cadeia, simbolo escopo) {
 	for (s = tabsimb[i]; (s!=NULL); s = s->prox) {
 		if (strcmp(cadeia, s->cadeia) == 0 && (s->escopo == escopo)) break;
 	}
+	return s;
+}
+
+/*
+	ProcuraSimbDecl (cadeia): Procura cadeia na tabela de simbolos;
+	Caso ela ali esteja, retorna um ponteiro para sua celula;
+	Caso contrario, retorna NULL. Esta função procura no escopo local e global.
+ */
+ simbolo ProcuraSimbDecl (char *cadeia, simbolo escopo) {
+	simbolo s = ProcuraSimb (cadeia, escopo);
+	if (s != NULL) return s;
+	s = ProcuraSimb (cadeia, escopo->escopo);
 	return s;
 }
 
