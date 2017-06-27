@@ -243,6 +243,7 @@ Elem 		:	ID  {
                         simb = InsereSimb ($1,  IDVAR,  tipocorrente, escopo);
                         simb->array = FALSO; simb->ndims = 0;
                     }
+
                 }  DimList
 			;
 
@@ -464,7 +465,7 @@ CallStat 	: 	CALL ID OPPAR CLPAR SCOLON
 ReturnStat 	: 	RETURN SCOLON {printf ("return ;\n");
 					$$ = NAOVAR;
 			}
-			| 	RETURN {printf ("return ");} Expression SCOLON {printf (";\\n");
+			| 	RETURN {printf ("return ");} Expression SCOLON {printf (";\n");
 					$$ = $3;
 			}
 			;
@@ -697,6 +698,7 @@ void InicTabSimb () {
 simbolo ProcuraSimb (char *cadeia, simbolo escopo) {
 	simbolo s; int i;
 	i = hash (cadeia);
+
 	for (s = tabsimb[i]; (s!=NULL) && strcmp(cadeia, s->cadeia) && (s->escopo == escopo);
 		s = s->prox);
 	return s;
@@ -715,8 +717,7 @@ simbolo InsereSimb (char *cadeia, int tid, int tvar, simbolo escopo) {
 	s->cadeia = malloc ((strlen(cadeia)+1)* sizeof(char));
 	strcpy (s->cadeia, cadeia);
 	s->prox = aux; s->tid = tid;  s->tvar = tvar;
-	s->escopo = escopo;
-
+	s->escopo = escopo; s->listvardecl = NULL;
 
 /*	Codigo para parametros e variáveis globais e locais  */
 
@@ -882,8 +883,16 @@ pontexprtipo* ConcatListTipo (pontexprtipo* first, pontexprtipo* second) {
 
 void InsereListSimb (simbolo s, listsimb* p) {
 	listsimb aux = s->listvardecl;
-	while (aux->prox != NULL) aux = aux->prox;
-	aux->prox = *p;
+
+	if (aux == NULL) s->listvardecl = *p;
+	else {
+		while (aux->prox != NULL){ 
+			aux = aux->prox;
+		}
+		
+		aux->prox = *p;
+
+	}
 }
 
 
