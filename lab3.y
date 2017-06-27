@@ -277,10 +277,11 @@ SubProgDecl :	Header Decls CompStat {
 			;
 
 Header 		: 	{printf("function ");} FuncHeader {$$ = $2;}
-			| 	{printf ("procedure ");} ProcHeader {$$ = $2;}
+			| 	ProcHeader {$$ = $1;}
 			;
 
-FuncHeader 	: 	FUNCTION Type ID {
+FuncHeader 	: 	FUNCTION Type ID OPPAR {declparam = VERDADE;} CLPAR {declparam = FALSO;} SCOLON {
+					printf ("%s ();\n",$3); $$ = simb;
 					if  (ProcuraSimb ($3, escopo)  !=  NULL)
                         DeclaracaoRepetida ($3);
 					escopo = simb = InsereSimb ($3, IDFUNC, tipocorrente, escopo);
@@ -288,23 +289,35 @@ FuncHeader 	: 	FUNCTION Type ID {
 					pontparam = simb->listparam;
                     $<simb>$ = simb;
 				}
-				OPPAR {declparam = VERDADE;} CLPAR {declparam = FALSO;} SCOLON {printf ("%s ();\n",$3); $$ = simb;}
-			|	FUNCTION Type ID {
+			|	FUNCTION Type ID OPPAR {
+					declparam = VERDADE;
+					printf ("%s (",$3);
 					if  (ProcuraSimb ($3, escopo)  !=  NULL)
                         DeclaracaoRepetida ($3);
-					escopo = simb = InsereSimb ($3, IDFUNC, tipocorrente, escopo);
-					pontvardecl = simb->listvardecl;
-					pontparam = simb->listparam;
-					$<simb>$ = simb;
-				}
-				OPPAR {declparam = VERDADE;} {printf ("%s (",$3);}	
+						escopo = simb = InsereSimb ($3, IDFUNC, tipocorrente, escopo);
+						pontvardecl = simb->listvardecl;
+						pontparam = simb->listparam;
+						$<simb>$ = simb;
+				} 
 				ParamList CLPAR {declparam = FALSO;} SCOLON
 				{printf (");\n");
 					$$ = simb;
 				}
 			;
 
-ProcHeader 	: 	PROCEDURE ID {
+ProcHeader 	: 	PROCEDURE ID OPPAR {declparam = VERDADE;} CLPAR {declparam = FALSO;} SCOLON {
+					if  (ProcuraSimb ($2, escopo)  !=  NULL)
+                        DeclaracaoRepetida ($2);
+					escopo = simb = InsereSimb ($2, IDPROC, NAOVAR, escopo);
+					pontvardecl = simb->listvardecl;
+					pontparam = simb->listparam;
+					$<simb>$ = simb;
+					printf ("procedure %s ();\n",$2);
+				}
+
+			| 	PROCEDURE ID OPPAR {
+					printf ("procedure %s (",$2); 
+					declparam = VERDADE;
 					if  (ProcuraSimb ($2, escopo)  !=  NULL)
                         DeclaracaoRepetida ($2);
 					escopo = simb = InsereSimb ($2, IDPROC, NAOVAR, escopo);
@@ -312,18 +325,6 @@ ProcHeader 	: 	PROCEDURE ID {
 					pontparam = simb->listparam;
 					$<simb>$ = simb;
 				}
-				OPPAR CLPAR SCOLON
-				{printf ("procedure %s ();\n",$2);}
-			| 	PROCEDURE ID {
-					if  (ProcuraSimb ($2, escopo)  !=  NULL)
-                        DeclaracaoRepetida ($2);
-					escopo = simb = InsereSimb ($2, IDPROC, NAOVAR, escopo);
-					pontvardecl = simb->listvardecl;
-					pontparam = simb->listparam;
-					$<simb>$ = simb;
-				}
-				OPPAR 
-				{printf ("procedure %s (",$2); declparam = VERDADE;}
 				ParamList CLPAR {declparam = FALSO;} SCOLON
 				{printf (");\n");}
 			;
