@@ -263,21 +263,22 @@ SubProgs 	:
 			;
 
 SubProgDecl :	Header Decls CompStat {
-				if ($3 == NAOVAR) {
-					if ($1->tvar != NAOVAR)
-						Incompatibilidade ("Função não void sem retorno");
-				} else {
-					if ($1->tvar == INTEIRO && $3 != INTEIRO && $3 != CARACTERE)  
-						Incompatibilidade ("Função do tipo inteiro não retorna inteiro ou caractere");
-					if ($1->tvar == REAL && $3 != INTEIRO && $3 != REAL && $3 != CARACTERE)
-						Incompatibilidade ("Função do tipo real não retorna real, inteiro ou caractere");
-					if ($1->tvar == CARACTERE && $3 != INTEIRO && $3 != CARACTERE)
-						Incompatibilidade ("Função do tipo caractere não retorna inteiro ou caractere");
-					if ($1->tvar == LOGICO && $3 != LOGICO)
-						Incompatibilidade ("Função do tipo lógico não retorna tipo lógico");
-					if ($1->tvar == NAOVAR && $3 != NAOVAR)
-						Incompatibilidade ("Função do tipo void retornando expressão");
-					}	
+					if ($3 == NAOVAR) {
+						if ($1->tvar != NAOVAR)
+							Incompatibilidade ("Função não void sem retorno");
+					} else {
+						if ($1->tvar == INTEIRO && $3 != INTEIRO && $3 != CARACTERE)  
+							Incompatibilidade ("Função do tipo inteiro não retorna inteiro ou caractere");
+						if ($1->tvar == REAL && $3 != INTEIRO && $3 != REAL && $3 != CARACTERE)
+							Incompatibilidade ("Função do tipo real não retorna real, inteiro ou caractere");
+						if ($1->tvar == CARACTERE && $3 != INTEIRO && $3 != CARACTERE)
+							Incompatibilidade ("Função do tipo caractere não retorna inteiro ou caractere");
+						if ($1->tvar == LOGICO && $3 != LOGICO)
+							Incompatibilidade ("Função do tipo lógico não retorna tipo lógico");
+						if ($1->tvar == NAOVAR && $3 != NAOVAR)
+							Incompatibilidade ("Função do tipo void retornando expressão");
+						}	
+					escopo = escopo->escopo;
 				}
 			;
 
@@ -481,11 +482,9 @@ CallStat 	: 	CALL ID OPPAR CLPAR SCOLON
 
 ReturnStat 	: 	RETURN SCOLON {printf ("return ;\n");
 					$$ = NAOVAR;
-					escopo = escopo->escopo;
 			}
 			| 	RETURN {printf ("return ");} Expression SCOLON {printf (";\n");
 					$$ = $3;
-					escopo = escopo->escopo;
 			}
 			;
 
