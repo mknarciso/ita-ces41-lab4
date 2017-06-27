@@ -287,9 +287,8 @@ FuncHeader 	: 	FUNCTION Type ID {
 					pontvardecl = simb->listvardecl;
 					pontparam = simb->listparam;
                     $<simb>$ = simb;
-
 				}
-				OPPAR {declparam = VERDADE;} CLPAR {declparam = FALSO;} SCOLON {printf ("%s ();\n",$3);}
+				OPPAR {declparam = VERDADE;} CLPAR {declparam = FALSO;} SCOLON {printf ("%s ();\n",$3); $$ = simb;}
 			|	FUNCTION Type ID {
 					if  (ProcuraSimb ($3, escopo)  !=  NULL)
                         DeclaracaoRepetida ($3);
@@ -300,7 +299,9 @@ FuncHeader 	: 	FUNCTION Type ID {
 				}
 				OPPAR {declparam = VERDADE;} {printf ("%s (",$3);}	
 				ParamList CLPAR {declparam = FALSO;} SCOLON
-				{printf (");\n");}
+				{printf (");\n");
+					$$ = simb;
+				}
 			;
 
 ProcHeader 	: 	PROCEDURE ID {
