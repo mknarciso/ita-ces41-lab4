@@ -276,7 +276,7 @@ SubProgDecl :	Header Decls CompStat ReturnStat {
 			;
 
 Header 		: 	{printf("function ");} FuncHeader {$$ = $2;}
-			| 	ProcHeader {$$ = $1;}
+			| 	{printf ("procedure ");} ProcHeader {$$ = $2;}
 			;
 
 FuncHeader 	: 	FUNCTION Type ID {
@@ -699,8 +699,9 @@ simbolo ProcuraSimb (char *cadeia, simbolo escopo) {
 	simbolo s; int i;
 	i = hash (cadeia);
 
-	for (s = tabsimb[i]; (s!=NULL) && strcmp(cadeia, s->cadeia) && (s->escopo == escopo);
-		s = s->prox);
+	for (s = tabsimb[i]; (s!=NULL); s = s->prox) {
+		if (strcmp(cadeia, s->cadeia) == 0 && (s->escopo == escopo)) break;
+	}
 	return s;
 }
 
