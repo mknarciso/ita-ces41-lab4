@@ -472,9 +472,11 @@ CallStat 	: 	CALL ID OPPAR CLPAR SCOLON
 
 ReturnStat 	: 	RETURN SCOLON {printf ("return ;\n");
 					$$ = NAOVAR;
+					escopo = escopo->escopo;
 			}
 			| 	RETURN {printf ("return ");} Expression SCOLON {printf (";\n");
 					$$ = $3;
+					escopo = escopo->escopo;
 			}
 			;
 
@@ -756,7 +758,7 @@ simbolo InsereSimb (char *cadeia, int tid, int tvar, simbolo escopo) {
 
 /*	Codigo para identificador global ou nome de função  */
 
-	if (tid == IDGLOB || tid == IDFUNC) {
+	if (tid == IDGLOB || tid == IDFUNC || tid == IDPROC) {
 		s->listvardecl = (elemlistsimb *) 
 			malloc  (sizeof (elemlistsimb));
 		s->listvardecl->prox = NULL;
@@ -768,7 +770,7 @@ simbolo InsereSimb (char *cadeia, int tid, int tvar, simbolo escopo) {
 	}
 
 /*	Codigo para nome de função e retorno de Inserir */
-	if (tid == IDFUNC) {
+	if (tid == IDFUNC || tid == IDPROC) {
 		s->listparam = (elemlistsimb *) 
 			malloc  (sizeof (elemlistsimb));
 		s->listparam->prox = NULL;
