@@ -263,17 +263,22 @@ SubProgs 	:
 			;
 
 SubProgDecl :	Header Decls CompStat {
-				if ($1->tvar == INTEIRO && $3 != INTEIRO && $3 != CARACTERE)  
-					Incompatibilidade ("Função do tipo inteiro não retorna inteiro ou caractere");
-				if ($1->tvar == REAL && $3 != INTEIRO && $3 != REAL && $3 != CARACTERE)
-					Incompatibilidade ("Função do tipo real não retorna real, inteiro ou caractere");
-				if ($1->tvar == CARACTERE && $3 != INTEIRO && $3 != CARACTERE)
-					Incompatibilidade ("Função do tipo caractere não retorna inteiro ou caractere");
-				if ($1->tvar == LOGICO && $3 != LOGICO)
-					Incompatibilidade ("Função do tipo lógico não retorna tipo lógico");
-				if ($1->tvar == NAOVAR && $3 != NAOVAR)
-					Incompatibilidade ("Função do tipo void retornando expressão");
-				}	
+				if ($3 == NAOVAR) {
+					if ($1->tvar != NAOVAR)
+						Incompatibilidade ("Função não void sem retorno");
+				} else {
+					if ($1->tvar == INTEIRO && $3 != INTEIRO && $3 != CARACTERE)  
+						Incompatibilidade ("Função do tipo inteiro não retorna inteiro ou caractere");
+					if ($1->tvar == REAL && $3 != INTEIRO && $3 != REAL && $3 != CARACTERE)
+						Incompatibilidade ("Função do tipo real não retorna real, inteiro ou caractere");
+					if ($1->tvar == CARACTERE && $3 != INTEIRO && $3 != CARACTERE)
+						Incompatibilidade ("Função do tipo caractere não retorna inteiro ou caractere");
+					if ($1->tvar == LOGICO && $3 != LOGICO)
+						Incompatibilidade ("Função do tipo lógico não retorna tipo lógico");
+					if ($1->tvar == NAOVAR && $3 != NAOVAR)
+						Incompatibilidade ("Função do tipo void retornando expressão");
+					}	
+				}
 			;
 
 Header 		: 	{printf("function ");} FuncHeader {$$ = $2;}
@@ -313,6 +318,7 @@ ProcHeader 	: 	PROCEDURE ID OPPAR {declparam = VERDADE;} CLPAR {declparam = FALS
 					pontparam = simb->listparam;
 					$<simb>$ = simb;
 					printf ("procedure %s ();\n",$2);
+					$$ = simb;
 				}
 
 			| 	PROCEDURE ID OPPAR {
@@ -324,9 +330,12 @@ ProcHeader 	: 	PROCEDURE ID OPPAR {declparam = VERDADE;} CLPAR {declparam = FALS
 					pontvardecl = simb->listvardecl;
 					pontparam = simb->listparam;
 					$<simb>$ = simb;
+					
 				}
 				ParamList CLPAR {declparam = FALSO;} SCOLON
-				{printf (");\n");}
+				{printf (");\n");
+					$$ = simb;
+				}
 			;
 
 ParamList 	: 	Parameter
@@ -360,19 +369,19 @@ StatList	:
 			}
 			;
 
-Statement   :	CompStat
-			|	{tabular ();} IfStat
-			|	{tabular ();} WhileStat
-			|	{tabular ();} RepeatStat
-			|	{tabular ();} ForStat
-			|	{tabular ();} ReadStat
-			|	{tabular ();} WriteStat
-			|	{tabular ();} AssignStat
-			|	{tabular ();} CallStat
+Statement   :	CompStat {$$ = $1;}
+			|	{tabular ();} IfStat {$$ = NAOVAR;}
+			|	{tabular ();} WhileStat {$$ = NAOVAR;}
+			|	{tabular ();} RepeatStat {$$ = NAOVAR;}
+			|	{tabular ();} ForStat {$$ = NAOVAR;}
+			|	{tabular ();} ReadStat {$$ = NAOVAR;}
+			|	{tabular ();} WriteStat {$$ = NAOVAR;}
+			|	{tabular ();} AssignStat {$$ = NAOVAR;}
+			|	{tabular ();} CallStat {$$ = NAOVAR;}
 			|	{tabular ();} ReturnStat {
 				$$ = $2;
 			}
-			|	{tabular ();} SCOLON
+			|	{tabular ();} SCOLON {$$ = NAOVAR;}
 			;
 
 IfStat		: 	IF OPPAR {printf("if (");} 
