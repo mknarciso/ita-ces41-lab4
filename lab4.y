@@ -206,7 +206,7 @@ Prog 		: 		{InicTabSimb (); declparam = FALSO;
 						pontfunc = simb->listfunc;
 					}  PROGRAM  ID  SCOLON
                     {printf ("program %s ;\n", $3);}
-                    Decls SubProgs CompStat  {
+                    Decls SubProgs CompStat  { 
                         VerificaInicRef ();
                         ImprimeTabSimb ();
                     }
@@ -473,10 +473,22 @@ WriteElem 	: 	STRING {printf("%s",$1);}
 			;
 
 CallStat 	: 	CALL ID OPPAR CLPAR SCOLON 
-				{printf ("call %s ();\n",$2);}
+				{printf ("call %s ();\n",$2);
+					simb = ProcuraSimb ($2, escopo);
+					if (! simb) NaoDeclarado ($2);
+					else if (simb->tid != IDPROC)
+						TipoInadequado ($2);
+					$<simb>$ = simb;	
+				}
 			|	CALL ID OPPAR 
-				{printf ("call %s (",$2);}
-				ExprList CLPAR SCOLON
+				{printf ("call %s (",$2);
+					simb = ProcuraSimb ($2, escopo);
+					if (! simb) NaoDeclarado ($2);
+					else if (simb->tid != IDPROC)
+						TipoInadequado ($2);
+					$<simb>$ = simb;	
+				}
+				Arguments CLPAR SCOLON
 				{printf (");\n");}
 			;
 
@@ -646,13 +658,13 @@ Subscript 	: 	OPBRAK  {printf ("[ ");}  AuxExpr4  CLBRAK  {
 			;
 
 FuncCall 	: 	ID {printf ("%s",$1);}  OPPAR {printf ("(");
-					simb = ProcuraSimb ($1, escopo->escopo);
+					simb = ProcuraSimb ($1, escopo);
 					if (! simb) NaoDeclarado ($1);
 					else if (simb->tid != IDFUNC)
 						TipoInadequado ($1);
 					$<simb>$ = simb;	
 			} Arguments CLPAR {printf (")");
-				$$ = $<simb>4;
+				$$ = $<simb>5;
 				if ($$ && $$->tid == IDFUNC) {
 					if ($$->nparam != $5.nargs)
 						Incompatibilidade 
