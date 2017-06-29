@@ -418,7 +418,7 @@ RepeatStat 	: 	REPEAT {printf("repeat ");}
 
 ForStat 	: 	FOR OPPAR {printf("for ( ");}
 				Variable ASSIGN {printf(" = "); 
-						if ($4->ndims != 0 || ($4->tvar != INTEIRO && $4->tvar != CARACTERE)) {
+						if ($4 != NULL && ($4->ndims != 0 || ($4->tvar != INTEIRO && $4->tvar != CARACTERE))) {
 							Incompatibilidade ("Variavel de inicializacao deve ser escalar do tipo inteiro ou caractere");
 						}
 				}
