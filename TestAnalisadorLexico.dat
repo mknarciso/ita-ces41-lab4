@@ -68,7 +68,7 @@ var
 
 procedure ExibirTabela ();
 var
-	int i; logic fim;
+	int i; int j; logic fim;
 {
 	write ("          ", "Palavra             ", 
 								"   Num. de ocorr.");
