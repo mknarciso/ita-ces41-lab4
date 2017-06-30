@@ -140,11 +140,11 @@ void InsereListSimb (simbolo, listsimb*);
 /* Declaracao dos atributos dos tokens e dos nao-terminais */
 
 %type	    <simb>	        Variable Header FuncHeader  ProcHeader
-%type 	    <tipoexpr> 	    Expression  AuxExpr1  AuxExpr2 CompStat StatList Statement ReturnStat
+%type 	  <tipoexpr> 	    Expression  AuxExpr1  AuxExpr2 CompStat StatList Statement ReturnStat
                             AuxExpr3   AuxExpr4   Term   Factor 
                             
-%type       <nsubscr>       SubscrList
-%type 		<infolexpr>		ExprList Arguments
+%type     <nsubscr>   SubscrList
+%type 		<infolexpr>	ExprList Arguments
 %type  		<simb>  		FuncCall
 
 
@@ -196,414 +196,414 @@ void InsereListSimb (simbolo, listsimb*);
 %%
 
 /* Producoes da gramatica:
-
 	Os terminais sao escritos e, depois de alguns,
 	para alguma estetica, ha mudanca de linha       */
 
-Prog 		: 		{InicTabSimb (); declparam = FALSO;
-						escopo = simb = InsereSimb("global##", IDPROG, NAOVAR, NULL);
-						pontvardecl = simb->listvardecl;
-						pontfunc = simb->listfunc;
-					}  PROGRAM  ID  SCOLON
-                    {printf ("program %s ;\n", $3);}
-                    Decls SubProgs CompStat  { 
-                        VerificaInicRef ();
-                        ImprimeTabSimb ();
-                    }
-			;
+Prog 			: 		{ InicTabSimb (); declparam = FALSO;
+									escopo = simb = InsereSimb("global##", IDPROG, NAOVAR, NULL);
+							  	pontvardecl = simb->listvardecl;
+									pontfunc = simb->listfunc;
+								}  PROGRAM  ID  SCOLON
+			            {printf ("program %s ;\n", $3);}
+			            Decls SubProgs CompStat  { 
+		                VerificaInicRef ();
+		                ImprimeTabSimb ();
+		            }
+						;
 
-Decls 		:
-			| 	VAR {tabular (); printf ("var\n"); tab++;} 
-				DeclList
-				{tab--; tabular (); printf ("\n");}
-			;
+Decls 			:
+						| 	VAR {tabular (); printf ("var\n"); tab++;} 
+							DeclList
+							{tab--; tabular (); printf ("\n");}
+						;
 
-DeclList 	:	Declaration
-			| 	DeclList Declaration
-			;
+DeclList 		:	Declaration
+						| 	DeclList Declaration
+						;
 
 Declaration : 	{tabular ();} 
-				Type ElemList SCOLON {printf(";\n");}
-			;
+							Type ElemList SCOLON {printf(";\n");}
+						;
 
-Type		: 	INT  {printf ("int "); tipocorrente = INTEIRO;}
-            |   FLOAT  {printf ("float "); tipocorrente = REAL;}
-            |   CHAR  {printf ("char "); tipocorrente = CARACTERE;}
-            |   LOGIC  {printf ("logic "); tipocorrente = LOGICO;}
-			;
+Type				: 	INT  {printf ("int "); tipocorrente = INTEIRO;}
+			      |   FLOAT  {printf ("float "); tipocorrente = REAL;}
+			      |   CHAR  {printf ("char "); tipocorrente = CARACTERE;}
+			      |   LOGIC  {printf ("logic "); tipocorrente = LOGICO;}
+						;
 
-ElemList 	: 	Elem
-			| 	ElemList COMMA  {printf(", ");}	Elem
-			;
+ElemList 		: 	Elem
+						| 	ElemList COMMA  {printf(", ");}	Elem
+						;
 
-Elem 		:	ID  {
-                    printf ("%s ", $1);
-                    if  (ProcuraSimb ($1, escopo)  !=  NULL)
-                        DeclaracaoRepetida ($1);
-                    else {
-                        simb = InsereSimb ($1,  IDVAR,  tipocorrente, escopo);
-                        simb->array = FALSO; simb->ndims = 0;
-                    }
+Elem 				:	ID  {
+	              printf ("%s ", $1);
+	              if  (ProcuraSimb ($1, escopo)  !=  NULL)
+                  DeclaracaoRepetida ($1);
+	              else {
+                  simb = InsereSimb ($1,  IDVAR,  tipocorrente, escopo);
+                  simb->array = FALSO; simb->ndims = 0;
+	              }
+		          }  DimList
+						;
 
-                }  DimList
-			;
+DimList 		:
+						| 	DimList Dim {simb->array = VERDADE;}
+						;
 
-DimList 	:
-			| 	DimList Dim {simb->array = VERDADE;}
-			;
+Dim 				: 	OPBRAK  INTCT  CLBRAK  {
+						              printf ("[ %d ] ", $2);
+						              if ($2 <= 0) Esperado ("Valor inteiro positivo");
+						              simb->ndims++; simb->dims[simb->ndims] = $2;}
+						;
 
-Dim 		: 	OPBRAK  INTCT  CLBRAK  {
-                    printf ("[ %d ] ", $2);
-                    if ($2 <= 0) Esperado ("Valor inteiro positivo");
-                    simb->ndims++; simb->dims[simb->ndims] = $2;}
-			;
-
-SubProgs 	:
-			|	SubProgs SubProgDecl
-			;
+SubProgs 		:
+						|	SubProgs SubProgDecl
+						;
 
 SubProgDecl :	Header Decls CompStat {
-					if ($3 == NAOVAR) {
-						if ($1->tvar != NAOVAR)
-							Incompatibilidade ("Função não void sem retorno");
-					} else {
-						if ($1->tvar == INTEIRO && $3 != INTEIRO && $3 != CARACTERE)  
-							Incompatibilidade ("Função do tipo inteiro não retorna inteiro ou caractere");
-						if ($1->tvar == REAL && $3 != INTEIRO && $3 != REAL && $3 != CARACTERE)
-							Incompatibilidade ("Função do tipo real não retorna real, inteiro ou caractere");
-						if ($1->tvar == CARACTERE && $3 != INTEIRO && $3 != CARACTERE)
-							Incompatibilidade ("Função do tipo caractere não retorna inteiro ou caractere");
-						if ($1->tvar == LOGICO && $3 != LOGICO)
-							Incompatibilidade ("Função do tipo lógico não retorna tipo lógico");
-						if ($1->tvar == NAOVAR && $3 != NAOVAR)
-							Incompatibilidade ("Função do tipo void retornando expressão");
-						}	
-					escopo = escopo->escopo;
-				}
-			;
+								if ($3 == NAOVAR) {
+									if ($1->tvar != NAOVAR)
+										Incompatibilidade ("Função não void sem retorno");
+								} else {
+									if ($1->tvar == INTEIRO && $3 != INTEIRO && $3 != CARACTERE)  
+										Incompatibilidade ("Função do tipo inteiro não retorna inteiro ou caractere");
+									if ($1->tvar == REAL && $3 != INTEIRO && $3 != REAL && $3 != CARACTERE)
+										Incompatibilidade ("Função do tipo real não retorna real, inteiro ou caractere");
+									if ($1->tvar == CARACTERE && $3 != INTEIRO && $3 != CARACTERE)
+										Incompatibilidade ("Função do tipo caractere não retorna inteiro ou caractere");
+									if ($1->tvar == LOGICO && $3 != LOGICO)
+										Incompatibilidade ("Função do tipo lógico não retorna tipo lógico");
+									if ($1->tvar == NAOVAR && $3 != NAOVAR)
+										Incompatibilidade ("Função do tipo void retornando expressão");
+									}	
+								escopo = escopo->escopo;
+							}
+						;					
 
-Header 		: 	{printf("function ");} FuncHeader {$$ = $2;}
-			| 	ProcHeader {$$ = $1;}
-			;
+Header 			: 	{printf("function ");} FuncHeader {$$ = $2;}
+						| 	ProcHeader {$$ = $1;}
+						;
 
 FuncHeader 	: 	FUNCTION Type ID OPPAR {declparam = VERDADE;} CLPAR {declparam = FALSO;} SCOLON {
-					printf ("%s ();\n",$3); $$ = simb;
-					if  (ProcuraSimb ($3, escopo)  !=  NULL)
-                        DeclaracaoRepetida ($3);
-					escopo = simb = InsereSimb ($3, IDFUNC, tipocorrente, escopo);
-					pontvardecl = simb->listvardecl;
-					pontparam = simb->listparam;
-                    $<simb>$ = simb;
-				}
-			|	FUNCTION Type ID OPPAR {
-					declparam = VERDADE;
-					printf ("%s (",$3);
-					if  (ProcuraSimb ($3, escopo)  !=  NULL)
-                        DeclaracaoRepetida ($3);
-						escopo = simb = InsereSimb ($3, IDFUNC, tipocorrente, escopo);
-						pontvardecl = simb->listvardecl;
-						pontparam = simb->listparam;
-						$<simb>$ = simb;
-				} 
-				ParamList CLPAR {declparam = FALSO;} SCOLON
-				{printf (");\n");
-					$$ = simb;
-				}
-			;
+								printf ("%s ();\n",$3); $$ = simb;
+								if  (ProcuraSimb ($3, escopo)  !=  NULL)
+                  DeclaracaoRepetida ($3);
+								escopo = simb = InsereSimb ($3, IDFUNC, tipocorrente, escopo);
+								pontvardecl = simb->listvardecl;
+								pontparam = simb->listparam;
+	              $<simb>$ = simb;
+							}
+						|	FUNCTION Type ID OPPAR {
+								declparam = VERDADE;
+								printf ("%s (",$3);
+								if  (ProcuraSimb ($3, escopo)  !=  NULL)
+                  DeclaracaoRepetida ($3);
+									escopo = simb = InsereSimb ($3, IDFUNC, tipocorrente, escopo);
+									pontvardecl = simb->listvardecl;
+									pontparam = simb->listparam;
+									$<simb>$ = simb;
+							} 
+							ParamList CLPAR {declparam = FALSO;} SCOLON
+							{printf (");\n");
+								$$ = simb;
+							}
+						;
 
 ProcHeader 	: 	PROCEDURE ID OPPAR {declparam = VERDADE;} CLPAR {declparam = FALSO;} SCOLON {
-					if  (ProcuraSimb ($2, escopo)  !=  NULL)
-                        DeclaracaoRepetida ($2);
-					escopo = simb = InsereSimb ($2, IDPROC, NAOVAR, escopo);
-					pontvardecl = simb->listvardecl;
-					pontparam = simb->listparam;
-					$<simb>$ = simb;
-					printf ("procedure %s ();\n",$2);
-					$$ = simb;
-				}
+								if  (ProcuraSimb ($2, escopo)  !=  NULL)
+	                DeclaracaoRepetida ($2);
+								escopo = simb = InsereSimb ($2, IDPROC, NAOVAR, escopo);
+								pontvardecl = simb->listvardecl;
+								pontparam = simb->listparam;
+								$<simb>$ = simb;
+								printf ("procedure %s ();\n",$2);
+								$$ = simb;
+							}
 
-			| 	PROCEDURE ID OPPAR {
-					printf ("procedure %s (",$2); 
-					declparam = VERDADE;
-					if  (ProcuraSimb ($2, escopo)  !=  NULL)
-                        DeclaracaoRepetida ($2);
-					escopo = simb = InsereSimb ($2, IDPROC, NAOVAR, escopo);
-					pontvardecl = simb->listvardecl;
-					pontparam = simb->listparam;
-					$<simb>$ = simb;
-					
-				}
-				ParamList CLPAR {declparam = FALSO;} SCOLON
-				{printf (");\n");
-					$$ = simb;
-				}
-			;
+						| 	PROCEDURE ID OPPAR {
+								printf ("procedure %s (",$2); 
+								declparam = VERDADE;
+								if  (ProcuraSimb ($2, escopo)  !=  NULL)
+	                DeclaracaoRepetida ($2);
+								escopo = simb = InsereSimb ($2, IDPROC, NAOVAR, escopo);
+								pontvardecl = simb->listvardecl;
+								pontparam = simb->listparam;
+								$<simb>$ = simb;
+				
+							}
+							ParamList CLPAR {declparam = FALSO;} SCOLON
+							{printf (");\n");
+								$$ = simb;
+							}
+						;																						
 
 ParamList 	: 	Parameter
-			|	ParamList COMMA {printf(", ");} Parameter 
-			;
+						|	ParamList COMMA {printf(", ");} Parameter 
+						;
 
 Parameter 	:	Type ID {printf(" %s",$2);}
 
 
 CompStat    :	OPBRACE {
-					tab--;
-					tabular (); 
-					printf ("\{\n"); 
-					tab++;	
-					tab++;
-				}
-				StatList 
-				CLBRACE {
-					tab--;
-					tab--; 
-					tabular ();
-					 printf ("}\n");
-					 tab++;
-					 $$ = $3;
-				}
-			;
+								tab--;
+								tabular (); 
+								printf ("\{\n"); 
+								tab++;	
+								tab++;
+							}
+							StatList 
+							CLBRACE {
+								tab--;
+								tab--; 
+								tabular ();
+								 printf ("}\n");
+								 tab++;
+								 $$ = $3;
+							}
+						;
 
-StatList	:	
-			|	StatList Statement {
-				$$ = $2;
-			}
-			;
+StatList		:	
+						|	StatList Statement {
+							$$ = $2;
+						}
+						;
 
 Statement   :	CompStat {$$ = $1;}
-			|	{tabular ();} IfStat {$$ = NAOVAR;}
-			|	{tabular ();} WhileStat {$$ = NAOVAR;}
-			|	{tabular ();} RepeatStat {$$ = NAOVAR;}
-			|	{tabular ();} ForStat {$$ = NAOVAR;}
-			|	{tabular ();} ReadStat {$$ = NAOVAR;}
-			|	{tabular ();} WriteStat {$$ = NAOVAR;}
-			|	{tabular ();} AssignStat {$$ = NAOVAR;}
-			|	{tabular ();} CallStat {$$ = NAOVAR;}
-			|	{tabular ();} ReturnStat {
-				$$ = $2;
-			}
-			|	{tabular ();} SCOLON {$$ = NAOVAR;}
-			;
+						|	{tabular ();} IfStat {$$ = NAOVAR;}
+						|	{tabular ();} WhileStat {$$ = NAOVAR;}
+						|	{tabular ();} RepeatStat {$$ = NAOVAR;}
+						|	{tabular ();} ForStat {$$ = NAOVAR;}
+						|	{tabular ();} ReadStat {$$ = NAOVAR;}
+						|	{tabular ();} WriteStat {$$ = NAOVAR;}
+						|	{tabular ();} AssignStat {$$ = NAOVAR;}
+						|	{tabular ();} CallStat {$$ = NAOVAR;}
+						|	{tabular ();} ReturnStat {
+							$$ = $2;
+						}
+						|	{tabular ();} SCOLON {$$ = NAOVAR;}
+						;
 
-IfStat		: 	IF OPPAR {printf("if (");} 
-				Expression CLPAR {printf(")\n");} {
-					if ($4 != LOGICO)
-                            Incompatibilidade ("Expressao nao logica/relacional dentro de if");
-				}
-				{tab++;} Statement {tab--;}
-				ElseStat
-			;
+IfStat			: IF OPPAR {printf("if (");} 
+							Expression CLPAR {printf(")\n");} {
+								if ($4 != LOGICO)
+                  Incompatibilidade ("Expressao nao logica/relacional dentro de if");
+							}
+							{tab++;} Statement {tab--;}
+							ElseStat
+						;
 
-ElseStat 	: 	
-			| 	ELSE {tabular (); printf("else\n");} 
-				{tab++;} Statement {tab--;}
+ElseStat 		: 	
+						| 	ELSE {tabular (); printf("else\n");} 
+							{tab++;} Statement {tab--;}
 
-			;
+						;
 
 WhileStat 	: 	WHILE OPPAR {printf("while ( ");}
-				Expression CLPAR {printf(" )\n");} {
-					if ($4 != LOGICO)
-                            Incompatibilidade ("Expressao nao logica/relacional dentro de while");
-				}
-				{tab++;} Statement {tab--;}
-			;
+								Expression CLPAR {printf(" )\n");} {
+									if ($4 != LOGICO)
+		                Incompatibilidade ("Expressao nao logica/relacional dentro de while");
+								}
+								{tab++;} Statement {tab--;}
+						;
 
 RepeatStat 	: 	REPEAT {printf("repeat ");}
-				Statement WHILE OPPAR {printf(" while ( ");}
-				Expression CLPAR SCOLON {printf(" );\n");} {
-					if ($7 != LOGICO)
-                            Incompatibilidade ("Expressao nao logica/relacional dentro de repeat");
-				}
-			;
+							Statement WHILE OPPAR {printf(" while ( ");}
+							Expression CLPAR SCOLON {printf(" );\n");} {
+								if ($7 != LOGICO)
+                	Incompatibilidade ("Expressao nao logica/relacional dentro de repeat");
+							}
+						;
 
 ForStat 	: 	FOR OPPAR {printf("for ( ");}
-				Variable ASSIGN {printf(" = "); 
-						if ($4 != NULL && ($4->ndims != 0 || ($4->tvar != INTEIRO && $4->tvar != CARACTERE))) {
-							Incompatibilidade ("Variavel de inicializacao deve ser escalar do tipo inteiro ou caractere");
+						Variable ASSIGN {printf(" = "); 
+							if ($4 != NULL && ($4->ndims != 0 || ($4->tvar != INTEIRO && $4->tvar != CARACTERE))) {
+								Incompatibilidade ("Variavel de inicializacao deve ser escalar do tipo inteiro ou caractere");
+							}
 						}
-				}
-				Expression SCOLON {printf("; ");}
-				Expression SCOLON {printf("; ");
-					if ($10 != LOGICO) {
-						Incompatibilidade ("A segunda expressao de um comando for deve ser do tipo logico");
-					}
-				}
-				Variable ASSIGN { printf(" = ");
-					if ($4 != $13) {
-						Incompatibilidade ("A variavel de atualizacao do comando for deve ser a mesma daquela de sua inicializacao");
-					}
-				}
-				Expression CLPAR {printf(" )\n");
-					if (($7 != INTEIRO && $7 != CARACTERE) || ($16 != INTEIRO && $16 != CARACTERE)) {
-						Incompatibilidade ("A primeira e terceira expressao de um comando for deve ser do tipo inteiro ou caractere");
-					}
-				}
-				{tab++;} Statement {tab--;}
-			;
+						Expression SCOLON {printf("; ");}
+						Expression SCOLON {printf("; ");
+							if ($10 != LOGICO) {
+								Incompatibilidade ("A segunda expressao de um comando for deve ser do tipo logico");
+							}
+						}
+						Variable ASSIGN { printf(" = ");
+							if ($4 != $13) {
+								Incompatibilidade ("A variavel de atualizacao do comando for deve ser a mesma daquela de sua inicializacao");
+							}
+						}
+						Expression CLPAR {printf(" )\n");
+							if (($7 != INTEIRO && $7 != CARACTERE) || ($16 != INTEIRO && $16 != CARACTERE)) {
+								Incompatibilidade ("A primeira e terceira expressao de um comando for deve ser do tipo inteiro ou caractere");
+							}
+						}
+						{tab++;} Statement {tab--;}
+					;
 
 ReadStat 	:	READ OPPAR {printf("read (");} 
-				ReadList CLPAR SCOLON
-				{printf(");\n");}
-			;
+						ReadList CLPAR SCOLON
+						{printf(");\n");}
+					;
 
 ReadList 	: 	Variable  {
-                        if ($1 != NULL) {
-                            $1->inic = VERDADE;
-                            $1->ref = VERDADE;
-                        }
-                    } |  ReadList  COMMA  {printf (", ");}  Variable {
-                        if ($4 != NULL) {
-                            $4->inic = VERDADE;
-                            $4->ref = VERDADE;
-                        }
-                    }
-			;
+		              if ($1 != NULL) {
+		                $1->inic = VERDADE;
+		                $1->ref = VERDADE;
+		              }
+		          } 
+					|   ReadList  COMMA  {printf (", ");}  
+						  Variable {
+                if ($4 != NULL) {
+                  $4->inic = VERDADE;
+                  $4->ref = VERDADE;
+                }
+              }
+					;
 
 WriteStat 	: 	WRITE OPPAR {printf("write (");} 
-				WriteList 
-				CLPAR SCOLON {printf(");\n");}
-			;
+								WriteList 
+								CLPAR SCOLON {printf(");\n");}
+						;
 
 WriteList 	: 	WriteElem
-			| 	WriteList COMMA {printf(", ");} WriteElem
-			;
+						| 	WriteList COMMA {printf(", ");} WriteElem
+						;
 
 WriteElem 	: 	STRING {printf("%s",$1);}
-			| 	Expression 
-			;
+						| 	Expression 
+						;	
 
-CallStat 	: 	CALL ID OPPAR CLPAR SCOLON 
-				{printf ("call %s ();\n",$2);
-					simb = ProcuraSimb ($2, escopo);
-					if (! simb) NaoDeclarado ($2);
-					else if (simb->tid != IDPROC)
-						TipoInadequado ($2);
-					$<simb>$ = simb;	
-				}
-			|	CALL ID OPPAR 
-				{printf ("call %s (",$2);
-					simb = ProcuraSimb ($2, escopo);
-					if (! simb) NaoDeclarado ($2);
-					else if (simb->tid != IDPROC)
-						TipoInadequado ($2);
-					$<simb>$ = simb;	
-				}
-				Arguments CLPAR SCOLON
-				{printf (");\n");}
-			;
+CallStat 		: 	CALL ID OPPAR CLPAR SCOLON 
+							{printf ("call %s ();\n",$2);
+								simb = ProcuraSimb ($2, escopo);
+								if (! simb) NaoDeclarado ($2);
+								else if (simb->tid != IDPROC)
+									TipoInadequado ($2);
+								$<simb>$ = simb;	
+							}
+						|	CALL ID OPPAR 
+							{printf ("call %s (",$2);
+								simb = ProcuraSimb ($2, escopo);
+								if (! simb) NaoDeclarado ($2);
+								else if (simb->tid != IDPROC)
+									TipoInadequado ($2);
+								$<simb>$ = simb;	
+							}
+							Arguments CLPAR SCOLON
+							{printf (");\n");}
+						;
 
 ReturnStat 	: 	RETURN SCOLON {printf ("return ;\n");
-					$$ = NAOVAR;
-			}
-			| 	RETURN {printf ("return ");} Expression SCOLON {printf (";\n");
-					$$ = $3;
-			}
-			;
+								$$ = NAOVAR;
+						}
+						| 	RETURN {printf ("return ");} Expression SCOLON {printf (";\n");
+								$$ = $3;
+						}
+						;
 
 AssignStat 	:	Variable  {if  ($1 != NULL) $1->inic = $1->ref = VERDADE;}
                 ASSIGN  {printf ("= ");}  Expression  SCOLON  {
-                    printf (";\n");
-                    if ($1 != NULL)
-                        if ((($1->tvar == INTEIRO || $1->tvar == CARACTERE) &&
-                            ($5 == REAL || $5 == LOGICO)) ||
-                            ($1->tvar == REAL && $5 == LOGICO) ||
-                            ($1->tvar == LOGICO && $5 != LOGICO))
-                            Incompatibilidade ("Lado direito de comando de atribuicao improprio");
+                  printf (";\n");
+                  if ($1 != NULL)
+                    if ((($1->tvar == INTEIRO || $1->tvar == CARACTERE) &&
+                      ($5 == REAL || $5 == LOGICO)) ||
+                      ($1->tvar == REAL && $5 == LOGICO) ||
+                      ($1->tvar == LOGICO && $5 != LOGICO))
+                      	Incompatibilidade ("Lado direito de comando de atribuicao improprio");
                 }
-			;
+						;
 
-ExprList 	: 	Expression {$$.nargs = 1;   $$.listtipo = InicListTipo ($1);}
-			| 	ExprList COMMA {printf(", ");} Expression {
-				$$.nargs = $1.nargs + 1;
-				$$.listtipo = 
-					ConcatListTipo ($1.listtipo, InicListTipo ($4));
+ExprList 		: 	Expression {$$.nargs = 1;   $$.listtipo = InicListTipo ($1);}
+						| 	ExprList COMMA {printf(", ");} Expression {
+							$$.nargs = $1.nargs + 1;
+							$$.listtipo = 
+								ConcatListTipo ($1.listtipo, InicListTipo ($4));
 
-			}
-			;
+						}
+						;
 
 Expression  :   AuxExpr1
             |   Expression  OR  {printf ("|| ");}  AuxExpr1  {
-                    if ($1 != LOGICO || $4 != LOGICO)
-                        Incompatibilidade ("Operando improprio para operador or");
-                    $$ = LOGICO;
+                  if ($1 != LOGICO || $4 != LOGICO)
+                    Incompatibilidade ("Operando improprio para operador or");
+                  $$ = LOGICO;
                 }
             ;
 AuxExpr1    :   AuxExpr2
             |   AuxExpr1  AND  {printf ("&& ");}  AuxExpr2  {
-                    if ($1 != LOGICO || $4 != LOGICO)
-                        Incompatibilidade ("Operando improprio para operador and");
-                    $$ = LOGICO;
+                  if ($1 != LOGICO || $4 != LOGICO)
+                    Incompatibilidade ("Operando improprio para operador and");
+                  $$ = LOGICO;
                 }
             ;
 AuxExpr2    :   AuxExpr3
             |   NOT  {printf ("! ");}  AuxExpr3  {
-                    if ($3 != LOGICO)
-                        Incompatibilidade ("Operando improprio para operador not");
-                    $$ = LOGICO;
+                  if ($3 != LOGICO)
+                    Incompatibilidade ("Operando improprio para operador not");
+                  $$ = LOGICO;
                 }
             ;
 AuxExpr3    :   AuxExpr4
             |   AuxExpr4  RELOP  {
-                    switch ($2) {
-                        case LT: printf ("< "); break;
-                        case LE: printf ("<= "); break;
-                        case EQ: printf ("== "); break;
-                        case NE: printf ("!= "); break;
-                        case GT: printf ("> "); break;
-                        case GE: printf (">= "); break;
-                    }
+                  switch ($2) {
+                    case LT: printf ("< "); break;
+                    case LE: printf ("<= "); break;
+                    case EQ: printf ("== "); break;
+                    case NE: printf ("!= "); break;
+                    case GT: printf ("> "); break;
+                    case GE: printf (">= "); break;
+                  }
                 }  AuxExpr4  {
-                    switch ($2) {
-                        case LT: case LE: case GT: case GE:
-                            if ($1 != INTEIRO && $1 != REAL && $1 != CARACTERE || $4 != INTEIRO && $4 != REAL && $4 != CARACTERE)
-                                Incompatibilidade	("Operando improprio para operador relacional");
-                            break;
-                        case EQ: case NE:
-                            if (($1 == LOGICO || $4 == LOGICO) && $1 != $4)
-                                Incompatibilidade ("Operando improprio para operador relacional");
-                            break;
-                    }
-                    $$ = LOGICO;
+                  switch ($2) {
+                    case LT: case LE: case GT: case GE:
+                      if ($1 != INTEIRO && $1 != REAL && $1 != CARACTERE || $4 != INTEIRO && $4 != REAL && $4 != CARACTERE)
+                        Incompatibilidade	("Operando improprio para operador relacional");
+                      break;
+                    case EQ: case NE:
+                      if (($1 == LOGICO || $4 == LOGICO) && $1 != $4)
+                        Incompatibilidade ("Operando improprio para operador relacional");
+                      break;
+                  }
+                  $$ = LOGICO;
                 }
             ;
 AuxExpr4    :   Term
             |   AuxExpr4  ADOP  {
-                    switch ($2) {
-                        case ADD: printf ("+ "); break;
-                        case SUB: printf ("- "); break;
-                    }
+		              switch ($2) {
+                    case ADD: printf ("+ "); break;
+                    case SUB: printf ("- "); break;
+		              }
                 }  Term  {
-                    if ($1 != INTEIRO && $1 != REAL && $1 != CARACTERE || $4 != INTEIRO && $4!=REAL && $4!=CARACTERE)
-                        Incompatibilidade ("Operando improprio para operador aritmetico");
-                    if ($1 == REAL || $4 == REAL) $$ = REAL;
-                    else $$ = INTEIRO;
+                  if ($1 != INTEIRO && $1 != REAL && $1 != CARACTERE || $4 != INTEIRO && $4!=REAL && $4!=CARACTERE)
+                      Incompatibilidade ("Operando improprio para operador aritmetico");
+                  if ($1 == REAL || $4 == REAL) $$ = REAL;
+                  else $$ = INTEIRO;
                 }
             ;
 
 Term 		: 	Factor
-			| 	Term MULTOP {
-            		if ($2 == MULT) printf (" * ");
-            		else if ($2 == DIV) printf (" / ");
-					else printf (" %% ");
+				| 	Term MULTOP {
+          		if ($2 == MULT) printf (" * ");
+          		else if ($2 == DIV) printf (" / ");
+						else printf (" %% ");
             	}
             	Factor {
-                    switch ($2) {
-                        case MULT: case DIV:
-                            if ($1 != INTEIRO && $1 != REAL && $1 != CARACTERE
-                                || $4 != INTEIRO && $4!=REAL && $4!=CARACTERE)
-                                Incompatibilidade ("Operando improprio para operador aritmetico");
-                            if ($1 == REAL || $4 == REAL) $$ = REAL;
-                            else $$ = INTEIRO;
-                            break;
-                        case MOD:
-                            if ($1 != INTEIRO && $1 != CARACTERE
-                                ||  $4 != INTEIRO && $4 != CARACTERE)
-                                Incompatibilidade ("Operando improprio para operador resto");
-                            $$ = INTEIRO;
-                            break;
-                    }
-                }
-			;
+		            switch ($2) {
+		              case MULT: case DIV:
+		                if ($1 != INTEIRO && $1 != REAL && $1 != CARACTERE
+		                  || $4 != INTEIRO && $4!=REAL && $4!=CARACTERE)
+		                  Incompatibilidade ("Operando improprio para operador aritmetico");
+		                if ($1 == REAL || $4 == REAL) $$ = REAL;
+		                else $$ = INTEIRO;
+		                break;
+		              case MOD:
+		                if ($1 != INTEIRO && $1 != CARACTERE
+		                  ||  $4 != INTEIRO && $4 != CARACTERE)
+		                  Incompatibilidade ("Operando improprio para operador resto");
+		                $$ = INTEIRO;
+		                break;
+		            }
+              }
+					;
 
 Factor 		: 	Variable  {
                     if  ($1 != NULL)  {
@@ -611,9 +611,9 @@ Factor 		: 	Variable  {
                         $$ = $1->tvar;
                     }
                 }
-            |   INTCT  {printf ("%d ", $1); $$ = INTEIRO;}
-            |   FLOATCT  {printf ("%g ", $1); $$ = REAL;}
-            |   CHARCT  {printf ("\'%c\' ", $1); $$ = CARACTERE;}
+          |   INTCT  {printf ("%d ", $1); $$ = INTEIRO;}
+          |   FLOATCT  {printf ("%g ", $1); $$ = REAL;}
+          |   CHARCT  {printf ("\'%c\' ", $1); $$ = CARACTERE;}
         	|   TRUE  {printf ("true "); $$ = LOGICO;}
         	|   FALSE  {printf ("false "); $$ = LOGICO;}
         	|   NEG  {printf ("~ ");}  Factor {
@@ -625,8 +625,8 @@ Factor 		: 	Variable  {
         	|   OPPAR  {printf ("( ");}  Expression  CLPAR  {
                     printf (") "); $$ = $3;
                 }
-			| 	FuncCall
-			;
+					| 	FuncCall
+					;
 Variable 	: 	ID  {
                     printf ("%s ", $1);
                     simb = ProcuraSimbDecl ($1, escopo);
@@ -691,7 +691,6 @@ tabular () {
 }
 
 comentario () {
-
 	char c;  int estado;
 	estado = 1;
 	while (estado != 3) {
@@ -728,7 +727,6 @@ void InicTabSimb () {
 simbolo ProcuraSimb (char *cadeia, simbolo escopo) {
 	simbolo s; int i;
 	i = hash (cadeia);
-
 	for (s = tabsimb[i]; (s!=NULL); s = s->prox) {
 		if (strcmp(cadeia, s->cadeia) == 0 && (s->escopo == escopo)) break;
 	}
@@ -746,7 +744,6 @@ simbolo ProcuraSimb (char *cadeia, simbolo escopo) {
 	s = ProcuraSimb (cadeia, escopo->escopo);
 	return s;
 }
-
 
 /*
 	InsereSimb (cadeia, tid, tvar, simbolo escopo): Insere cadeia na tabela de
@@ -825,14 +822,12 @@ void ImprimeTabSimb () {
 				if (s->tid == IDVAR) {
 					printf (", %s, %d, %d",
 						nometipvar[s->tvar], s->inic, s->ref);
-                    if (s->array == VERDADE) { int j;
-                            printf (", EH ARRAY\n\tndims = %d, dimensoes:", s->ndims);
-                            for (j = 1; j <= s->ndims; j++)
-                                        printf ("  %d", s->dims[j]);
-                    }
-                }
-                
-
+          if (s->array == VERDADE) { int j;
+            printf (", EH ARRAY\n\tndims = %d, dimensoes:", s->ndims);
+            for (j = 1; j <= s->ndims; j++)
+            	printf ("  %d", s->dims[j]);
+          }
+        }
 				printf(")\n");
 			}
 		}
@@ -841,20 +836,19 @@ void ImprimeTabSimb () {
 /*  Mensagens de erros semanticos  */
 
 void DeclaracaoRepetida (char *s) {
-	printf ("\n\n***** Declaracao Repetida: %s *****\n\n", s);
+		printf ("\n\n***** Declaracao Repetida: %s *****\n\n", s);
 }
 
 void NaoDeclarado (char *s) {
-printf ("\n\n***** Identificador Nao Declarado: %s *****\n\n", s);
+		printf ("\n\n***** Identificador Nao Declarado: %s *****\n\n", s);
 }
 
 void TipoInadequado (char *s) {
-printf
-("\n\n***** Identificador de Tipo Inadequado: %s *****\n\n", s);
+		printf ("\n\n***** Identificador de Tipo Inadequado: %s *****\n\n", s);
 }
 
 void Incompatibilidade (char *s) {
-printf ("\n\n***** Incompatibilidade: %s *****\n\n", s);
+		printf ("\n\n***** Incompatibilidade: %s *****\n\n", s);
 }
 
 void Esperado (char *s) {
@@ -905,8 +899,6 @@ void ChecArgumentos (pontexprtipo* Ltiparg,   listsimb Lparam) {
 		}
 		p = p->prox; q = q->prox;
 	}
-
-
 }
 
 pontexprtipo* InicListTipo (int tipoexpr) {
@@ -926,7 +918,6 @@ pontexprtipo* ConcatListTipo (pontexprtipo* first, pontexprtipo* second) {
 
 void InsereListSimb (simbolo s, listsimb* p) {
 	listsimb aux = s->listvardecl;
-
 	if (aux == NULL) s->listvardecl = *p;
 	else {
 		while (aux->prox != NULL){ 

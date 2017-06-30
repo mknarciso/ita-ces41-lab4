@@ -1,0 +1,60 @@
+/*  Programa para contar as ocorrencias das
+    palavras de um texto                    */
+
+program Testes ;
+
+/*  Variaveis globais  */
+
+var
+	int b1, b2, b1, c, De, f[0], i, j[2], k[2];
+  float e;  
+  logic h;
+
+/*  Funcoes teste  */
+function int Teste ();
+var  
+  int b2;  
+{
+  a = 1;
+  b2= 0;
+  h = e;
+  i[2] = 0;
+  j[4] = 2;
+  
+  /*k[1]=k[2]=3;
+  k[1],k[2]=3;*/
+  
+  return b2;
+}
+function int De ();
+var  
+  int b2;  
+{
+  return b2;
+}
+function int Z1 (int b2);
+var int a;
+{
+  a=b2;
+  return a;
+}
+function int Z2 ();
+{
+  return 5;
+}
+
+function int Aa ();
+var  
+  int b2;  
+{
+  b2 = Aa();
+  return b2;
+}
+
+/*  Modulo principal  */
+
+{ 
+  b2=1;
+  c =  Teste();
+  b2 = Z1(Z2);
+}
