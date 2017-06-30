@@ -338,10 +338,16 @@ ProcHeader 	: 	PROCEDURE ID OPPAR {declparam = VERDADE;} CLPAR {declparam = FALS
 						;																						
 
 ParamList 	: 	Parameter
-						|	ParamList COMMA {printf(", ");} Parameter 
-						;
+				|	ParamList COMMA {printf(", ");} Parameter 
+				;
 
-Parameter 	:	Type ID {printf(" %s",$2);}
+
+Parameter 	:	Type ID {printf(" %s",$2);
+				if  (ProcuraSimb ($2, escopo)  !=  NULL) 
+	                DeclaracaoRepetida ($2);
+				simb = InsereSimb ($2, IDVAR, tipocorrente, escopo);
+				}
+			;
 
 
 CompStat    :	OPBRACE {
@@ -664,12 +670,13 @@ FuncCall 	: 	ID {printf ("%s",$1);}  OPPAR {printf ("(");
 						TipoInadequado ($1);
 					$<simb>$ = simb;	
 			} Arguments CLPAR {printf (")");
-				$$ = $<simb>5;
+				$$ = $<simb>4;
 				if ($$ && $$->tid == IDFUNC) {
 					if ($$->nparam != $5.nargs)
 						Incompatibilidade 
 				("Numero de argumentos diferente do  numero de parametros");
-					ChecArgumentos  ($5.listtipo, $$->listparam); 
+					if ($5.listtipo && $$->listparam)
+						ChecArgumentos  ($5.listtipo, $$->listparam); 
 				}
 			}
 			;
