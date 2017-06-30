@@ -819,7 +819,7 @@ int hash (char *cadeia) {
 /* ImprimeTabSimb: Imprime todo o conteudo da tabela de simbolos  */
 
 void ImprimeTabSimb () {
-	int i; simbolo s;
+	int i; simbolo s,p;
 	printf ("\n\n   TABELA  DE  SIMBOLOS:\n\n");
 	for (i = 0; i < NCLASSHASH; i++)
 		if (tabsimb[i]) {
@@ -833,6 +833,16 @@ void ImprimeTabSimb () {
             printf (", EH ARRAY\n\tndims = %d, dimensoes:", s->ndims);
             for (j = 1; j <= s->ndims; j++)
             	printf ("  %d", s->dims[j]);
+          }
+        }
+				if (s->tid == IDFUNC) {
+					printf (", %d parametros", s->nparam);
+          if (s->listparam != NULL) { int j;
+            printf (", [");
+            for (p = s->listparam; p!=NULL; p = p->prox)
+            	printf ("  %s;", nometipid[p->tid]);
+            
+            printf ("]");
           }
         }
 				printf(")\n");
