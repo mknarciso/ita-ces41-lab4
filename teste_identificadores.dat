@@ -13,17 +13,26 @@ var
 /*  Funcoes teste  */
 function int Teste ();
 var  
-  int b2;  
+  int b2,m1,m2,r1,r2; logic m3,n,o,p,s1,s2;   
 {
   a = 1;
   b2= 0;
   h = e;
   i[2] = 0;
   j[4] = 2;
-  
+  n = m1||m2;
   /*k[1]=k[2]=3;
   k[1],k[2]=3;*/
-  
+  m3 = m1+m2;
+  if(o){b2=2;}
+  for (p = false; p ; p = true) {
+    b2=1;  
+  }
+  for (r1 = 1; r2 < 3; r1=r1+1)
+  {
+    r2 = r2 + 1;
+  }
+  c = j[s1];
   return b2;
 }
 function int De ();
@@ -31,6 +40,36 @@ var
   int b2;  
 {
   return b2;
+}
+
+function int V1 (int c);
+var  
+  int b2;  
+{
+  return c;
+}
+function int W1 (int c);
+var  
+  int b2;  
+{
+  return c;
+}
+procedure X1 ();
+var  
+  int b2;  
+{
+  return b2;
+}
+function int X2 ();
+var  
+  int b2;  
+{
+  return;
+}
+function int Y1 ();
+var logic y2;
+{
+  return y2;
 }
 function int Z1 (int b2);
 var int a;
@@ -56,5 +95,7 @@ var
 { 
   b2=1;
   c =  Teste();
+  c = V1(b2,c);
+  c = W1(h);  
   b2 = Z1(Z2);
 }
