@@ -13,7 +13,7 @@ var
 /*  Funcoes teste  */
 function int Teste ();
 var  
-  int b2,m1,m2,r1,r2; logic m3,n,o,p,s1,s2;   
+  int b2,m1,m2,q1,q2,o; logic m3,n,p,s1,s2;   
 {
   a = 1;
   b2= 0;
@@ -28,9 +28,9 @@ var
   for (p = false; p ; p = true) {
     b2=1;  
   }
-  for (r1 = 1; r2 < 3; r1=r1+1)
+  for (q1 = 1; q1 < 3; q2=q2+1)
   {
-    r2 = r2 + 1;
+    q1 = q1 + 1;
   }
   c = j[s1];
   return b2;
