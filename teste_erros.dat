@@ -6,7 +6,7 @@ program Testes ;
 /*  Variaveis globais  */
 
 var
-	int b1, b2, b1, c, De, f[0], i, j[2], k[2];
+	int b1, b2, b1, c, De, f[0], i, j[3], k[2];
   float e;  
   logic h;
 
@@ -19,7 +19,7 @@ var
   b2= 0;
   h = e;
   i[2] = 0;
-  j[4] = 2;
+  j[2][1] = 2;
   n = m1||m2;
   /*k[1]=k[2]=3;
   k[1],k[2]=3;*/
