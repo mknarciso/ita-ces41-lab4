@@ -290,8 +290,6 @@ FuncHeader 	: 	FUNCTION Type ID OPPAR {declparam = VERDADE;} CLPAR {declparam = 
 								if  (ProcuraSimb ($3, escopo)  !=  NULL)
                   DeclaracaoRepetida ($3);
 								escopo = simb = InsereSimb ($3, IDFUNC, tipocorrente, escopo);
-								pontvardecl = simb->listvardecl;
-								pontparam = simb->listparam;
 	             				$<simb>$ = simb;
 							}
 						|	FUNCTION Type ID OPPAR {
@@ -346,7 +344,7 @@ ParamList 	: 	Parameter
 Parameter 	:	Type ID {printf(" %s",$2);
 				if  (ProcuraSimb ($2, escopo)  !=  NULL) 
 	                DeclaracaoRepetida ($2);
-				simb = InsereSimb ($2, IDVAR, tipocorrente, escopo);
+				else simb = InsereSimb ($2, IDVAR, tipocorrente, escopo);
 				}
 			;
 
@@ -676,8 +674,9 @@ FuncCall 	: 	ID {printf ("%s",$1);}  OPPAR {printf ("(");
 					if ($$->nparam != $5.nargs)
 						Incompatibilidade 
 				("Numero de argumentos diferente do  numero de parametros");
-					if ($5.listtipo && $$->listparam)
+					if ($5.listtipo && $$->listparam) {;
 						ChecArgumentos  ($5.listtipo, $$->listparam); 
+					}
 				}
 			}
 			;
@@ -818,7 +817,8 @@ int hash (char *cadeia) {
 /* ImprimeTabSimb: Imprime todo o conteudo da tabela de simbolos  */
 
 void ImprimeTabSimb () {
-	int i; simbolo s,p;
+	int i; simbolo s;
+	listsimb p;
 	printf ("\n\n   TABELA  DE  SIMBOLOS:\n\n");
 	for (i = 0; i < NCLASSHASH; i++)
 		if (tabsimb[i]) {
@@ -836,10 +836,10 @@ void ImprimeTabSimb () {
         }
 				if (s->tid == IDFUNC) {
 					printf (", %d parametros", s->nparam);
-          if (s->listparam != NULL) { int j;
+          if (s->listparam->prox != NULL) { int j;
             printf (", [");
-            for (p = s->listparam; p!=NULL; p = p->prox)
-            	printf ("  %s;", nometipid[p->tid]);
+            for (p = s->listparam->prox; p!=NULL; p = p->prox)
+            	printf ("  %s;", nometipvar[p->simb->tvar]);
             
             printf ("]");
           }
@@ -891,29 +891,35 @@ void VerificaInicRef () {
 }
 
 void ChecArgumentos (pontexprtipo* Ltiparg,   listsimb Lparam) {
-	printf ("oloco");
 	pontexprtipo* p;  pontelemlistsimb q;
-	p = Ltiparg->prox; q = Lparam->prox;
+	p = Ltiparg; q = Lparam->prox;
 	while (p != NULL && q != NULL) {
-		printf ("eita");
-		printf ("%d ~ %d\n", p->tipo, q->simb->tvar);
 		switch (q->simb->tvar) {
 			case INTEIRO: case CARACTERE:
-				if (p->tipo != INTEIRO && p->tipo != CARACTERE)
+				if (p->tipo != INTEIRO && p->tipo != CARACTERE) {
 					Incompatibilidade("Tipo de argumento diferente do tipo de parametro");
+					printf ("Argumento do tipo %s e parametro do tipo %s", nometipvar[p->tipo], nometipvar[q->simb->tvar]);
+				}
 				break;
 			case REAL:
 				if (p->tipo != INTEIRO &&  p->tipo != CARACTERE && 
-								p->tipo != REAL)
-					Incompatibilidade("Tipo de argumento diferente do tipo de parametro");			
+								p->tipo != REAL) {
+					Incompatibilidade("Tipo de argumento diferente do tipo de parametro");
+					printf ("Argumento do tipo %s e parametro do tipo %s", nometipvar[p->tipo], nometipvar[q->simb->tvar]);
+				}			
 				break;
 			case LOGICO:
-				if (p->tipo != LOGICO)
+				if (p->tipo != LOGICO) {
 					Incompatibilidade("Tipo de argumento diferente do tipo de parametro");
+					printf ("Argumento do tipo %s e parametro do tipo %s", nometipvar[p->tipo], nometipvar[q->simb->tvar]);
+				}
 				break;
 			default:
-				if (q->simb->tvar != p->tipo)
+				if (q->simb->tvar != p->tipo) {
 					Incompatibilidade("Tipo de argumento diferente do tipo de parametro");
+					printf ("Argumento do tipo %s e parametro do tipo %s", nometipvar[p->tipo], nometipvar[q->simb->tvar]);
+				
+				}
 				break;
 		}
 		p = p->prox; q = q->prox;
@@ -948,10 +954,9 @@ void InsereListSimb (simbolo s, listsimb* p) {
 			
 			(*aux) = (*aux)->prox;
 		}
-		printf ("poutz");
-		(*aux) = (listsimb) malloc(sizeof(elemlistsimb));
-		(*aux)->simb = s;
-		(*aux)->prox = NULL;
+		(*aux)->prox = (listsimb) malloc(sizeof(elemlistsimb));
+		(*aux)->prox->simb = s;
+		(*aux)->prox->prox = NULL;
 
 	}
 }
