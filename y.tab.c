@@ -672,7 +672,7 @@ typedef struct {
 } YYSTACKDATA;
 /* variables for the parser stack */
 static YYSTACKDATA yystack;
-#line 681 "lab4.y"
+#line 688 "lab4.y"
 
 /* Inclusao do analisador lexico  */
 
@@ -807,7 +807,7 @@ int hash (char *cadeia) {
 /* ImprimeTabSimb: Imprime todo o conteudo da tabela de simbolos  */
 
 void ImprimeTabSimb () {
-	int i; simbolo s;
+	int i; simbolo s,p;
 	printf ("\n\n   TABELA  DE  SIMBOLOS:\n\n");
 	for (i = 0; i < NCLASSHASH; i++)
 		if (tabsimb[i]) {
@@ -821,6 +821,16 @@ void ImprimeTabSimb () {
             printf (", EH ARRAY\n\tndims = %d, dimensoes:", s->ndims);
             for (j = 1; j <= s->ndims; j++)
             	printf ("  %d", s->dims[j]);
+          }
+        }
+				if (s->tid == IDFUNC) {
+					printf (", %d", s->nparam);
+          if (s->listparam != NULL) { int j;
+            printf (", Parametros:[");
+            for (p = s->listparam; p!=NULL; p = p->prox)
+            	printf ("  %s;", nometipid[p->tid]);
+            
+            printf ("]");
           }
         }
 				printf(")\n");
@@ -925,7 +935,7 @@ void InsereListSimb (simbolo s, listsimb* p) {
 }
 
 
-#line 929 "y.tab.c"
+#line 939 "y.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>		/* needed for printf */
@@ -1331,11 +1341,15 @@ case 42:
 	{printf(", ");}
 break;
 case 44:
-#line 344 "lab4.y"
-	{printf(" %s",yystack.l_mark[0].string);}
+#line 345 "lab4.y"
+	{printf(" %s",yystack.l_mark[0].string);
+				if  (ProcuraSimb (yystack.l_mark[0].string, escopo)  !=  NULL) 
+	                DeclaracaoRepetida (yystack.l_mark[0].string);
+				simb = InsereSimb (yystack.l_mark[0].string, IDVAR, tipocorrente, escopo);
+				}
 break;
 case 45:
-#line 347 "lab4.y"
+#line 353 "lab4.y"
 	{
 								tab--;
 								tabular (); 
@@ -1345,7 +1359,7 @@ case 45:
 							}
 break;
 case 46:
-#line 355 "lab4.y"
+#line 361 "lab4.y"
 	{
 								tab--;
 								tab--; 
@@ -1356,180 +1370,180 @@ case 46:
 							}
 break;
 case 48:
-#line 366 "lab4.y"
+#line 372 "lab4.y"
 	{
 							yyval.tipoexpr = yystack.l_mark[0].tipoexpr;
 						}
 break;
 case 49:
-#line 371 "lab4.y"
+#line 377 "lab4.y"
 	{yyval.tipoexpr = yystack.l_mark[0].tipoexpr;}
 break;
 case 50:
-#line 372 "lab4.y"
+#line 378 "lab4.y"
 	{tabular ();}
 break;
 case 51:
-#line 372 "lab4.y"
+#line 378 "lab4.y"
 	{yyval.tipoexpr = NAOVAR;}
 break;
 case 52:
-#line 373 "lab4.y"
+#line 379 "lab4.y"
 	{tabular ();}
 break;
 case 53:
-#line 373 "lab4.y"
+#line 379 "lab4.y"
 	{yyval.tipoexpr = NAOVAR;}
 break;
 case 54:
-#line 374 "lab4.y"
+#line 380 "lab4.y"
 	{tabular ();}
 break;
 case 55:
-#line 374 "lab4.y"
+#line 380 "lab4.y"
 	{yyval.tipoexpr = NAOVAR;}
 break;
 case 56:
-#line 375 "lab4.y"
+#line 381 "lab4.y"
 	{tabular ();}
 break;
 case 57:
-#line 375 "lab4.y"
+#line 381 "lab4.y"
 	{yyval.tipoexpr = NAOVAR;}
 break;
 case 58:
-#line 376 "lab4.y"
+#line 382 "lab4.y"
 	{tabular ();}
 break;
 case 59:
-#line 376 "lab4.y"
+#line 382 "lab4.y"
 	{yyval.tipoexpr = NAOVAR;}
 break;
 case 60:
-#line 377 "lab4.y"
+#line 383 "lab4.y"
 	{tabular ();}
 break;
 case 61:
-#line 377 "lab4.y"
+#line 383 "lab4.y"
 	{yyval.tipoexpr = NAOVAR;}
 break;
 case 62:
-#line 378 "lab4.y"
+#line 384 "lab4.y"
 	{tabular ();}
 break;
 case 63:
-#line 378 "lab4.y"
+#line 384 "lab4.y"
 	{yyval.tipoexpr = NAOVAR;}
 break;
 case 64:
-#line 379 "lab4.y"
+#line 385 "lab4.y"
 	{tabular ();}
 break;
 case 65:
-#line 379 "lab4.y"
+#line 385 "lab4.y"
 	{yyval.tipoexpr = NAOVAR;}
 break;
 case 66:
-#line 380 "lab4.y"
+#line 386 "lab4.y"
 	{tabular ();}
 break;
 case 67:
-#line 380 "lab4.y"
+#line 386 "lab4.y"
 	{
 							yyval.tipoexpr = yystack.l_mark[0].tipoexpr;
 						}
 break;
 case 68:
-#line 383 "lab4.y"
+#line 389 "lab4.y"
 	{tabular ();}
 break;
 case 69:
-#line 383 "lab4.y"
+#line 389 "lab4.y"
 	{yyval.tipoexpr = NAOVAR;}
 break;
 case 70:
-#line 386 "lab4.y"
+#line 392 "lab4.y"
 	{printf("if (");}
 break;
 case 71:
-#line 387 "lab4.y"
+#line 393 "lab4.y"
 	{printf(")\n");}
 break;
 case 72:
-#line 387 "lab4.y"
+#line 393 "lab4.y"
 	{
 								if (yystack.l_mark[-2].tipoexpr != LOGICO)
                   Incompatibilidade ("Expressao nao logica/relacional dentro de if");
 							}
 break;
 case 73:
-#line 391 "lab4.y"
+#line 397 "lab4.y"
 	{tab++;}
 break;
 case 74:
-#line 391 "lab4.y"
+#line 397 "lab4.y"
 	{tab--;}
 break;
 case 77:
-#line 396 "lab4.y"
+#line 402 "lab4.y"
 	{tabular (); printf("else\n");}
 break;
 case 78:
-#line 397 "lab4.y"
+#line 403 "lab4.y"
 	{tab++;}
 break;
 case 79:
-#line 397 "lab4.y"
+#line 403 "lab4.y"
 	{tab--;}
 break;
 case 80:
-#line 401 "lab4.y"
+#line 407 "lab4.y"
 	{printf("while ( ");}
 break;
 case 81:
-#line 402 "lab4.y"
+#line 408 "lab4.y"
 	{printf(" )\n");}
 break;
 case 82:
-#line 402 "lab4.y"
+#line 408 "lab4.y"
 	{
 									if (yystack.l_mark[-2].tipoexpr != LOGICO)
 		                Incompatibilidade ("Expressao nao logica/relacional dentro de while");
 								}
 break;
 case 83:
-#line 406 "lab4.y"
+#line 412 "lab4.y"
 	{tab++;}
 break;
 case 84:
-#line 406 "lab4.y"
+#line 412 "lab4.y"
 	{tab--;}
 break;
 case 85:
-#line 409 "lab4.y"
+#line 415 "lab4.y"
 	{printf("repeat ");}
 break;
 case 86:
-#line 410 "lab4.y"
+#line 416 "lab4.y"
 	{printf(" while ( ");}
 break;
 case 87:
-#line 411 "lab4.y"
+#line 417 "lab4.y"
 	{printf(" );\n");}
 break;
 case 88:
-#line 411 "lab4.y"
+#line 417 "lab4.y"
 	{
 								if (yystack.l_mark[-3].tipoexpr != LOGICO)
                 	Incompatibilidade ("Expressao nao logica/relacional dentro de repeat");
 							}
 break;
 case 89:
-#line 417 "lab4.y"
+#line 423 "lab4.y"
 	{printf("for ( ");}
 break;
 case 90:
-#line 418 "lab4.y"
+#line 424 "lab4.y"
 	{printf(" = "); 
 							if (yystack.l_mark[-1].simb != NULL && (yystack.l_mark[-1].simb->ndims != 0 || (yystack.l_mark[-1].simb->tvar != INTEIRO && yystack.l_mark[-1].simb->tvar != CARACTERE))) {
 								Incompatibilidade ("Variavel de inicializacao deve ser escalar do tipo inteiro ou caractere");
@@ -1537,11 +1551,11 @@ case 90:
 						}
 break;
 case 91:
-#line 423 "lab4.y"
+#line 429 "lab4.y"
 	{printf("; ");}
 break;
 case 92:
-#line 424 "lab4.y"
+#line 430 "lab4.y"
 	{printf("; ");
 							if (yystack.l_mark[-1].tipoexpr != LOGICO) {
 								Incompatibilidade ("A segunda expressao de um comando for deve ser do tipo logico");
@@ -1549,7 +1563,7 @@ case 92:
 						}
 break;
 case 93:
-#line 429 "lab4.y"
+#line 435 "lab4.y"
 	{ printf(" = ");
 							if (yystack.l_mark[-10].simb != yystack.l_mark[-1].simb) {
 								Incompatibilidade ("A variavel de atualizacao do comando for deve ser a mesma daquela de sua inicializacao");
@@ -1557,7 +1571,7 @@ case 93:
 						}
 break;
 case 94:
-#line 434 "lab4.y"
+#line 440 "lab4.y"
 	{printf(" )\n");
 							if ((yystack.l_mark[-10].tipoexpr != INTEIRO && yystack.l_mark[-10].tipoexpr != CARACTERE) || (yystack.l_mark[-1].tipoexpr != INTEIRO && yystack.l_mark[-1].tipoexpr != CARACTERE)) {
 								Incompatibilidade ("A primeira e terceira expressao de um comando for deve ser do tipo inteiro ou caractere");
@@ -1565,23 +1579,23 @@ case 94:
 						}
 break;
 case 95:
-#line 439 "lab4.y"
+#line 445 "lab4.y"
 	{tab++;}
 break;
 case 96:
-#line 439 "lab4.y"
+#line 445 "lab4.y"
 	{tab--;}
 break;
 case 97:
-#line 442 "lab4.y"
+#line 448 "lab4.y"
 	{printf("read (");}
 break;
 case 98:
-#line 444 "lab4.y"
+#line 450 "lab4.y"
 	{printf(");\n");}
 break;
 case 99:
-#line 447 "lab4.y"
+#line 453 "lab4.y"
 	{
 		              if (yystack.l_mark[0].simb != NULL) {
 		                yystack.l_mark[0].simb->inic = VERDADE;
@@ -1590,11 +1604,11 @@ case 99:
 		          }
 break;
 case 100:
-#line 453 "lab4.y"
+#line 459 "lab4.y"
 	{printf (", ");}
 break;
 case 101:
-#line 454 "lab4.y"
+#line 460 "lab4.y"
 	{
                 if (yystack.l_mark[0].simb != NULL) {
                   yystack.l_mark[0].simb->inic = VERDADE;
@@ -1603,23 +1617,23 @@ case 101:
               }
 break;
 case 102:
-#line 462 "lab4.y"
+#line 468 "lab4.y"
 	{printf("write (");}
 break;
 case 103:
-#line 464 "lab4.y"
+#line 470 "lab4.y"
 	{printf(");\n");}
 break;
 case 105:
-#line 468 "lab4.y"
+#line 474 "lab4.y"
 	{printf(", ");}
 break;
 case 107:
-#line 471 "lab4.y"
+#line 477 "lab4.y"
 	{printf("%s",yystack.l_mark[0].string);}
 break;
 case 109:
-#line 476 "lab4.y"
+#line 482 "lab4.y"
 	{printf ("call %s ();\n",yystack.l_mark[-3].string);
 								simb = ProcuraSimb (yystack.l_mark[-3].string, escopo);
 								if (! simb) NaoDeclarado (yystack.l_mark[-3].string);
@@ -1629,7 +1643,7 @@ case 109:
 							}
 break;
 case 110:
-#line 484 "lab4.y"
+#line 490 "lab4.y"
 	{printf ("call %s (",yystack.l_mark[-1].string);
 								simb = ProcuraSimb (yystack.l_mark[-1].string, escopo);
 								if (! simb) NaoDeclarado (yystack.l_mark[-1].string);
@@ -1639,35 +1653,35 @@ case 110:
 							}
 break;
 case 111:
-#line 492 "lab4.y"
+#line 498 "lab4.y"
 	{printf (");\n");}
 break;
 case 112:
-#line 495 "lab4.y"
+#line 501 "lab4.y"
 	{printf ("return ;\n");
 								yyval.tipoexpr = NAOVAR;
 						}
 break;
 case 113:
-#line 498 "lab4.y"
+#line 504 "lab4.y"
 	{printf ("return ");}
 break;
 case 114:
-#line 498 "lab4.y"
+#line 504 "lab4.y"
 	{printf (";\n");
 								yyval.tipoexpr = yystack.l_mark[-1].tipoexpr;
 						}
 break;
 case 115:
-#line 503 "lab4.y"
+#line 509 "lab4.y"
 	{if  (yystack.l_mark[0].simb != NULL) yystack.l_mark[0].simb->inic = yystack.l_mark[0].simb->ref = VERDADE;}
 break;
 case 116:
-#line 504 "lab4.y"
+#line 510 "lab4.y"
 	{printf ("= ");}
 break;
 case 117:
-#line 504 "lab4.y"
+#line 510 "lab4.y"
 	{
                   printf (";\n");
                   if (yystack.l_mark[-5].simb != NULL)
@@ -1679,15 +1693,15 @@ case 117:
                 }
 break;
 case 118:
-#line 515 "lab4.y"
+#line 521 "lab4.y"
 	{yyval.infolexpr.nargs = 1;   yyval.infolexpr.listtipo = InicListTipo (yystack.l_mark[0].tipoexpr);}
 break;
 case 119:
-#line 516 "lab4.y"
+#line 522 "lab4.y"
 	{printf(", ");}
 break;
 case 120:
-#line 516 "lab4.y"
+#line 522 "lab4.y"
 	{
 							yyval.infolexpr.nargs = yystack.l_mark[-3].infolexpr.nargs + 1;
 							yyval.infolexpr.listtipo = 
@@ -1696,11 +1710,11 @@ case 120:
 						}
 break;
 case 122:
-#line 525 "lab4.y"
+#line 531 "lab4.y"
 	{printf ("|| ");}
 break;
 case 123:
-#line 525 "lab4.y"
+#line 531 "lab4.y"
 	{
                   if (yystack.l_mark[-3].tipoexpr != LOGICO || yystack.l_mark[0].tipoexpr != LOGICO)
                     Incompatibilidade ("Operando improprio para operador or");
@@ -1708,11 +1722,11 @@ case 123:
                 }
 break;
 case 125:
-#line 532 "lab4.y"
+#line 538 "lab4.y"
 	{printf ("&& ");}
 break;
 case 126:
-#line 532 "lab4.y"
+#line 538 "lab4.y"
 	{
                   if (yystack.l_mark[-3].tipoexpr != LOGICO || yystack.l_mark[0].tipoexpr != LOGICO)
                     Incompatibilidade ("Operando improprio para operador and");
@@ -1720,11 +1734,11 @@ case 126:
                 }
 break;
 case 128:
-#line 539 "lab4.y"
+#line 545 "lab4.y"
 	{printf ("! ");}
 break;
 case 129:
-#line 539 "lab4.y"
+#line 545 "lab4.y"
 	{
                   if (yystack.l_mark[0].tipoexpr != LOGICO)
                     Incompatibilidade ("Operando improprio para operador not");
@@ -1732,7 +1746,7 @@ case 129:
                 }
 break;
 case 131:
-#line 546 "lab4.y"
+#line 552 "lab4.y"
 	{
                   switch (yystack.l_mark[0].atr) {
                     case LT: printf ("< "); break;
@@ -1745,7 +1759,7 @@ case 131:
                 }
 break;
 case 132:
-#line 555 "lab4.y"
+#line 561 "lab4.y"
 	{
                   switch (yystack.l_mark[-2].atr) {
                     case LT: case LE: case GT: case GE:
@@ -1761,7 +1775,7 @@ case 132:
                 }
 break;
 case 134:
-#line 570 "lab4.y"
+#line 576 "lab4.y"
 	{
 		              switch (yystack.l_mark[0].atr) {
                     case ADD: printf ("+ "); break;
@@ -1770,7 +1784,7 @@ case 134:
                 }
 break;
 case 135:
-#line 575 "lab4.y"
+#line 581 "lab4.y"
 	{
                   if (yystack.l_mark[-3].tipoexpr != INTEIRO && yystack.l_mark[-3].tipoexpr != REAL && yystack.l_mark[-3].tipoexpr != CARACTERE || yystack.l_mark[0].tipoexpr != INTEIRO && yystack.l_mark[0].tipoexpr!=REAL && yystack.l_mark[0].tipoexpr!=CARACTERE)
                       Incompatibilidade ("Operando improprio para operador aritmetico");
@@ -1779,7 +1793,7 @@ case 135:
                 }
 break;
 case 137:
-#line 584 "lab4.y"
+#line 590 "lab4.y"
 	{
           		if (yystack.l_mark[0].atr == MULT) printf (" * ");
           		else if (yystack.l_mark[0].atr == DIV) printf (" / ");
@@ -1787,7 +1801,7 @@ case 137:
             	}
 break;
 case 138:
-#line 589 "lab4.y"
+#line 595 "lab4.y"
 	{
 		            switch (yystack.l_mark[-2].atr) {
 		              case MULT: case DIV:
@@ -1807,7 +1821,7 @@ case 138:
               }
 break;
 case 139:
-#line 608 "lab4.y"
+#line 614 "lab4.y"
 	{
                     if  (yystack.l_mark[0].simb != NULL)  {
                         yystack.l_mark[0].simb->ref  =  VERDADE;
@@ -1816,31 +1830,31 @@ case 139:
                 }
 break;
 case 140:
-#line 614 "lab4.y"
+#line 620 "lab4.y"
 	{printf ("%d ", yystack.l_mark[0].valint); yyval.tipoexpr = INTEIRO;}
 break;
 case 141:
-#line 615 "lab4.y"
+#line 621 "lab4.y"
 	{printf ("%g ", yystack.l_mark[0].valfloat); yyval.tipoexpr = REAL;}
 break;
 case 142:
-#line 616 "lab4.y"
+#line 622 "lab4.y"
 	{printf ("\'%c\' ", yystack.l_mark[0].string); yyval.tipoexpr = CARACTERE;}
 break;
 case 143:
-#line 617 "lab4.y"
+#line 623 "lab4.y"
 	{printf ("true "); yyval.tipoexpr = LOGICO;}
 break;
 case 144:
-#line 618 "lab4.y"
+#line 624 "lab4.y"
 	{printf ("false "); yyval.tipoexpr = LOGICO;}
 break;
 case 145:
-#line 619 "lab4.y"
+#line 625 "lab4.y"
 	{printf ("~ ");}
 break;
 case 146:
-#line 619 "lab4.y"
+#line 625 "lab4.y"
 	{
                     if (yystack.l_mark[0].tipoexpr != INTEIRO && yystack.l_mark[0].tipoexpr != REAL && yystack.l_mark[0].tipoexpr != CARACTERE)
                         Incompatibilidade  ("Operando improprio para menos unario");
@@ -1849,17 +1863,17 @@ case 146:
                 }
 break;
 case 147:
-#line 625 "lab4.y"
+#line 631 "lab4.y"
 	{printf ("( ");}
 break;
 case 148:
-#line 625 "lab4.y"
+#line 631 "lab4.y"
 	{
                     printf (") "); yyval.tipoexpr = yystack.l_mark[-1].tipoexpr;
                 }
 break;
 case 150:
-#line 630 "lab4.y"
+#line 636 "lab4.y"
 	{
                     printf ("%s ", yystack.l_mark[0].string);
                     simb = ProcuraSimbDecl (yystack.l_mark[0].string, escopo);
@@ -1869,7 +1883,7 @@ case 150:
                 }
 break;
 case 151:
-#line 636 "lab4.y"
+#line 642 "lab4.y"
 	{
                     yyval.simb = yystack.l_mark[-1].simb;
                     if (yyval.simb != NULL) {
@@ -1883,19 +1897,19 @@ case 151:
                 }
 break;
 case 152:
-#line 649 "lab4.y"
+#line 655 "lab4.y"
 	{yyval.nsubscr = 0;}
 break;
 case 153:
-#line 650 "lab4.y"
+#line 656 "lab4.y"
 	{yyval.nsubscr = yystack.l_mark[-1].nsubscr + 1;}
 break;
 case 154:
-#line 653 "lab4.y"
+#line 659 "lab4.y"
 	{printf ("[ ");}
 break;
 case 155:
-#line 653 "lab4.y"
+#line 659 "lab4.y"
 	{
                         printf ("] ");
                         if (yystack.l_mark[-1].tipoexpr != INTEIRO && yystack.l_mark[-1].tipoexpr != CARACTERE)
@@ -1903,11 +1917,11 @@ case 155:
                         }
 break;
 case 156:
-#line 660 "lab4.y"
+#line 666 "lab4.y"
 	{printf ("%s",yystack.l_mark[0].string);}
 break;
 case 157:
-#line 660 "lab4.y"
+#line 666 "lab4.y"
 	{printf ("(");
 					simb = ProcuraSimb (yystack.l_mark[-2].string, escopo);
 					if (! simb) NaoDeclarado (yystack.l_mark[-2].string);
@@ -1917,22 +1931,23 @@ case 157:
 			}
 break;
 case 158:
-#line 666 "lab4.y"
+#line 672 "lab4.y"
 	{printf (")");
-				yyval.simb = yystack.l_mark[-1].simb;
+				yyval.simb = yystack.l_mark[-2].simb;
 				if (yyval.simb && yyval.simb->tid == IDFUNC) {
 					if (yyval.simb->nparam != yystack.l_mark[-1].infolexpr.nargs)
 						Incompatibilidade 
 				("Numero de argumentos diferente do  numero de parametros");
-					ChecArgumentos  (yystack.l_mark[-1].infolexpr.listtipo, yyval.simb->listparam); 
+					if (yystack.l_mark[-1].infolexpr.listtipo && yyval.simb->listparam)
+						ChecArgumentos  (yystack.l_mark[-1].infolexpr.listtipo, yyval.simb->listparam); 
 				}
 			}
 break;
 case 159:
-#line 677 "lab4.y"
+#line 684 "lab4.y"
 	{ yyval.infolexpr.nargs = 0; yyval.infolexpr.listtipo = NULL;}
 break;
-#line 1936 "y.tab.c"
+#line 1951 "y.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;
