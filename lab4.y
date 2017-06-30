@@ -49,7 +49,7 @@
 
 /*  Strings para nomes dos tipos de identificadores  */
 
-char *nometipid[6] = {" ", "IDGLOB", "IDVAR", "IDFUNC", "IDPROC", "IDPROG"};
+char *nometipid[6] = {" ", "IDGLOB", "IDVAR", "IDFUNC", "IDPROC"};
 
 /*  Strings para nomes dos tipos de variaveis  */
 
@@ -73,6 +73,7 @@ struct elemlistsimb {
 	simbolo simb; 
 	pontelemlistsimb prox;
 };
+
 
 
 struct celsimb {
@@ -104,7 +105,7 @@ simbolo simb, escopo;
 int tipocorrente;
 int tab = 0;
 int declparam;
-listsimb pontvardecl, pontfunc, pontparam;
+listsimb pontvardecl = NULL, pontfunc = NULL, pontparam = NULL;
 /* Prototipos das funcoes para a tabela de simbolos e analise semantica */
 
 void InicTabSimb (void);
@@ -200,7 +201,7 @@ void InsereListSimb (simbolo, listsimb*);
 	para alguma estetica, ha mudanca de linha       */
 
 Prog 			: 		{ InicTabSimb (); declparam = FALSO;
-									escopo = simb = InsereSimb("global##", IDPROG, NAOVAR, NULL);
+									escopo = simb = InsereSimb("global##", IDGLOB, NAOVAR, NULL);
 							  	pontvardecl = simb->listvardecl;
 									pontfunc = simb->listfunc;
 								}  PROGRAM  ID  SCOLON
@@ -291,7 +292,7 @@ FuncHeader 	: 	FUNCTION Type ID OPPAR {declparam = VERDADE;} CLPAR {declparam = 
 								escopo = simb = InsereSimb ($3, IDFUNC, tipocorrente, escopo);
 								pontvardecl = simb->listvardecl;
 								pontparam = simb->listparam;
-	              $<simb>$ = simb;
+	             				$<simb>$ = simb;
 							}
 						|	FUNCTION Type ID OPPAR {
 								declparam = VERDADE;
@@ -767,7 +768,6 @@ simbolo InsereSimb (char *cadeia, int tid, int tvar, simbolo escopo) {
 	s->escopo = escopo; s->listvardecl = NULL;
 
 /*	Codigo para parametros e variáveis globais e locais  */
-
 	if (declparam) {
 		s->inic = s->ref = s->param = VERDADE;
 		if (s->tid == IDVAR)
@@ -792,7 +792,6 @@ simbolo InsereSimb (char *cadeia, int tid, int tvar, simbolo escopo) {
 			malloc  (sizeof (elemlistsimb));
 		s->listfunc->prox = NULL;
 	}
-
 /*	Codigo para nome de função e retorno de Inserir */
 	if (tid == IDFUNC || tid == IDPROC) {
 		s->listparam = (elemlistsimb *) 
@@ -882,9 +881,12 @@ void VerificaInicRef () {
 }
 
 void ChecArgumentos (pontexprtipo* Ltiparg,   listsimb Lparam) {
+	printf ("oloco");
 	pontexprtipo* p;  pontelemlistsimb q;
 	p = Ltiparg->prox; q = Lparam->prox;
 	while (p != NULL && q != NULL) {
+		printf ("eita");
+		printf ("%d ~ %d\n", p->tipo, q->simb->tvar);
 		switch (q->simb->tvar) {
 			case INTEIRO: case CARACTERE:
 				if (p->tipo != INTEIRO && p->tipo != CARACTERE)
@@ -924,14 +926,22 @@ pontexprtipo* ConcatListTipo (pontexprtipo* first, pontexprtipo* second) {
 }
 
 void InsereListSimb (simbolo s, listsimb* p) {
-	listsimb aux = s->listvardecl;
-	if (aux == NULL) s->listvardecl = *p;
+	listsimb* aux = p;
+	if (*aux == NULL) {
+		(*p) = (listsimb) malloc(sizeof(elemlistsimb));
+		(*p)->simb = s;
+		(*p)->prox = NULL;
+
+	}
 	else {
-		while (aux->prox != NULL){ 
-			aux = aux->prox;
+		while ((*aux)->prox != NULL){ 
+			
+			(*aux) = (*aux)->prox;
 		}
-		
-		aux->prox = *p;
+		printf ("poutz");
+		(*aux) = (listsimb) malloc(sizeof(elemlistsimb));
+		(*aux)->simb = s;
+		(*aux)->prox = NULL;
 
 	}
 }
